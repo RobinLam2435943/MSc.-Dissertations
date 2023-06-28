@@ -252,13 +252,48 @@ From the above literature, it could be observed that people tend to use CNN, esp
 The street view images are reformatted into matrices with $3$ axes. The first axis describes the height of an image, and there are $320$ pixels along this axis. The second one describes the width of an image, and there are also $320$ pixels along this axis. The third one describes the number of primary colours. After reformatting, $307, 200$ pixel values are generated for each image, and such values are integers ranging from $0$ to $255$. However, there could be an issue of memory if a large amount of features are taken into account in constructing models. A possible way to avoid it could be applying dimensionality reduction techniques, including principle component analysis (PCA), and factor analysis. However, chances are that crucial information might be lost when applying such techniques. For instance, contours of the houses might be necessary for image classification, and if some of those key pixels are missing, models might provide ridiculous results, such as classifying a flat as a terraced house. In view of this, dimensionality reduction techniques would not be the best option. Another possible way could be extracting features by applying algorithms like autoencoder, or diffusion map, etc. However, none of these algorithms seem time-efficient in dealing with such a large scale of features in the images. The fastest, and perhaps the most straightforward method is resizing those images to a lower resolution. It should be very fast, since it is just about merging, and averaging neighbouring pixels. It should also preserve the key information in the images, since downsizing them would preserve the information of the contours of houses, which might be crucial in modelling. In this project, the heights and widths of the images are downsized to $64$ pixels. The main advantages of doing so are that training a model would not be extremely time consuming, and that key information, such as the contours of houses, would be preserved.
 
 \subsection{One Hot Encoding}
-For the categorical outcome variable, one hot encoding is applied to convert it into a numerical form. Such an encoding method preserves norminality of the variable, ensuring that the models learn patterns of the outcome variable.
+For types of properties, the categorical outcome variable, one hot encoding is applied to convert it into the form of numerical values. Such an encoding method preserves norminality of the variable, ensuring that the models learn patterns of the outcome variable.
 
 \subsection{Train-Validation-Test Split}
-The models adopted in this paper are neural network models. In order to avoid overfitting, it is necessary to split a dataset into different groups. In this project, the dataset is split into non-overlapping training, validation, and test sets by randomly selecting an integer-valued seed. Among the $3$ sets, there are $70\%$ of the data in the training set, $20\%$ in the validation set, and the rest $10\%$ in the testing set.
+The models adopted in this paper are neural network models. In order to avoid overfitting, it is necessary to split the dataset into different groups. In this project, the dataset is split into non-overlapping training, validation, and testing sets by randomly selecting an integer-valued seed. Among the $3$ sets, there are $70\%$ of the data in the training set, $20\%$ in the validation set, and $10\%$ in the testing set.
 
 \section{Modelling}
+\subsection{Normalising Pixel Values}
+As mentioned above, the pixel values range from $0$ to $255$. The first thing that we should think about is to normalise these values, so that they range from $0$ to $1$. There are some good reasons for this regarding how the models update the weights. For neural network models, the weights in a certain iteration are updated by adding the product of the learning rate and the gradient to the weights in the previous iteration. If the pixel values were not scaled, the corrections that they might have produced would vary from one another. In other words, some weights might be over-corrected, while some others might be under-corrected. In order to make similar corrections to the weights, such pixel values should be normalised. Typically, in this case, the normalisation process could simply be done by dividing the pixel values by $255$.
 
+\subsection{Selecting Activation Functions}
+\subsubsection{ReLU or Leaky ReLU?}
+ReLU stands for rectified linear unit. Such an activation function returns exactly the input when it is non-negative, and returns $0$ when it is negative. Compared with sigmoid and hyperbolic tangent activation functions, it does not suffer from the problem of vanishing gradient. When one of sigmoid and hyperbolic tangent activation functions is applied, the gradient has an upper bound, and the further the inputs are from $0$, the smaller the gradient would be. This indicates that the models learn the patterns more slowly when there are multiple layers, and hence the weights would barely update. In order that the models could be persistently learn patterns in the images, ReLU is a better choice compared to sigmoid and hyperbolic tangent activation functions.
+
+Leaky ReLU stands for leaky rectified linear unit. It returns exactly the same value as it is in ReLU when the input is non-negative, but for negative inputs, it has a small slope. Such a small slope is almost invisible, but it is super powerful that it achieves what a ReLU function would not be able to accomplish. When the inputs are negative, ReLU function keeps outputting $0$ all the time, making the neurons inactive. In this case, models would no longer learn anything. However, the leaky ReLU function outputs a non-zero value when the inputs are negative, triggering the neurons to learn the patterns, so that the weights could be updated. This is useful, since the street view images might contain noise, and adopting such an activation function would make models more robust. 
+
+By and large, the leaky ReLU activation function is applied in all of the layers that need an activation function, except for the output layer.
+
+\subsubsection{Why Softmax in the Output Layer?}
+In this project, there are $4$ types of properties, as mentioned above. This is a multi-class classification problem, so the activation functions for binary class classification are inappropriate in the output layer. In this case, a typical activation function placed in the output layer is the \textit{softmax} function. In a sentence, \textit{softmax} function converts the inputs into different probabilities that sum up to $1$. In neural network models, these probabilities refer to the likelihoods of predicting different classes.
+
+\subsection{Choosing an Optimisation Algorithm}
+The optimisation algorithm we have chosen for the models is Adam. This is by far the best optimisation algorithm in constructing neural network models, and it has several advantages. Firstly, it does not require a large amount of memory, and it is simple and effective in its implementation. It is also capable of problems having a large amount of data, especially for such a massive image classification problem containing $13,775$ street view images. Finally, the hyper-parameters are rather easy to tune and interpret, making it easy to design Adam for different deep learning problems.
+
+\subsection{Monitoring the Models}
+
+\subsubsection{Epochs}
+In neural network models, an epoch refers to a complete training process for all data in the training set. The more the epochs are, the more the chances for the models to learn the patterns in the training set. However, it is also possible that the overfitting issue might occur. In order that this issue could be avoided, the models should be terminated from training when the validation accuracy is not getting any higher for several epochs. In this project, the models terminate from training if the validation accuracy is not improving after $5$ epochs in a row. This saves the training time considerably, and prevents the models from learning too much noise.
+
+\subsubsection{Learning Rates}
+The default learning rate of the Adam algorithm is $10^{-3}$. However, in the models, the learning rate should not be a constant, since there is neither guarantee that the problem is a convex one, nor guarantee that the validation accuracy is bound to converge. In our case, the learning rates should be adjusted accordingly based on the performances on the validation accuracy in each epoch. The initial value of the learning rate is set to be half of the default value, $i.e.$, $5 \times 10^{-4}$, since we do not wish the models to learn greedily at the very beginning, avoiding the possible low validation accuracy. Every time the accuracy decreases, or when it fails to reach the highest value in previous epochs, the learning rate is multiplied by $4 \times 10 ^ {-2}$. Usually, the models would learn the patterns effectively when the learning rate ranges from around $10^{-6}$ to around $10^{-3}$ within the first $7$ or $8$ epochs, and after that, the validation accuracy starts to converge.
+
+\subsection{Choosing Batch Sizes}
+In neural network models, the batch size refers to the number of samples used to update the weights. The larger the batch size, the smaller the number of iterations in an epoch. In practical experiments, the larger the batch size, the shorter the training time in an epoch, and the larger the variation in the validation accuracy. The smaller the batch size, the longer the training time in an epoch, and the higher the risk of encountering the issue of overfitting. In order to achieve a high and robust validation accuracy, a trade-off between them should be taken into account. In the models, the batch size is selected to be $50$, ensuring that the training time is not that long, and the validation accuracy grows steadily. 
+
+\subsection{Assigning Weights to the Loss Function}
+
+\subsection{Regularisation}
+
+\subsection{Models}
+\subsubsection{MLP Model}
+
+\subsubsection{CNN Model}
 
 \section{Results}
 \label{sec:results}
