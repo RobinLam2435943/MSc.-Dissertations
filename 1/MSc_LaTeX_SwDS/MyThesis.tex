@@ -9,6 +9,7 @@
 \usepackage{calc}
 \usepackage{listings}
 \usepackage{xcolor}
+\usepackage{datetime2}
 \usepackage[UKenglish]{datetime}
 
 \definecolor{codegrey}{rgb}{0.5, 0.5, 0.5}
@@ -72,15 +73,15 @@
 \includegraphics[width=180pt]{CentredLogoCMYK.jpg}
 \end{figure}
 \vspace{2em}
-\textbf{\Huge{My Incredible Thesis}}\\[2em]
+\textbf{\Huge{Estimating Property Types from Street View Images by Applying Neural Network Models}}\\[2em]
 \textbf{\LARGE{by}}\\
 \vspace{2em}
-\textbf{\LARGE{Robin Lin}}\\
+\textbf{\LARGE{Robin Lin, s2435943}}\\
 \vspace{6.5em}
 \Large{Dissertation Presented for the Degree of\\
 MSc in Statistics with Data Science}\\
 \vspace{6.5em}
-\Large{\today}\\
+\Large{June 2023}\\
 \vspace{3em}
 \Large{Supervised by\\Dr Nicole Augustin and Dr Michael Allerhand}
 \vfill
@@ -95,7 +96,7 @@ MSc in Statistics with Data Science}\\
 \Large{Executive Summary}
 \end{center}
 
-Here comes your executive summary ...
+Estimating premiums has always been a crucial but tough task for insurance providers, and classifying types of properties is undoubtedly the most essential part. In this project, images from Google street view are provided, and neural network models are constructed to predict property types. Among various models, the simple multi-layer perceptron (MLP) and convolutional neural network (CNN) models are adopted, and it turns out that the CNN model performs better than the MLP model in terms of prediction accuracy, although both models still could not present accurate results. By taking a closer look into the images, crucial observations are found, showing that some of the images are not of good quality, and that different types of properties are usually spotted to have similar shapes. Hence, it is suggested that image data from inside the houses should be provided as supplements to the outdoor street view data.
 
 \clearpage
 
@@ -103,7 +104,7 @@ Here comes your executive summary ...
 \Large{Acknowledgments}
 \end{center}
 
-Here come your acknowledgments ...
+I would like to thank Dr. Nicole Augustin and Dr. Michael Allerhand, the project supervisors, for their careful instructions and patient guidance. I would also like to thank Mr. Gordon Baggott and Ms. Ekaterina Zaytseva, the $2$ staff working in \href{https://www.simplybusiness.co.uk/}{\textit{Simply Business}}, for providing the data, and clarifying details of the project. I am also grateful to Mr. Lennart Hoheisel, the student helper, for his help in my understanding of the ideas of the whole project. Finally, I would like to thank $3$ of my friends, Julia Jose, Will Graham, and Riahn Holcomb, who have provided me with their creative thoughts in solving practical problems.
 
 \clearpage
 
@@ -433,12 +434,12 @@ Table \ref{tab:cnn} reports the classification results in the testing set.
 From the results obtained, the CNN model is also not that accurate enough, but the overall accuracy is higher than that of the MLP model. Surprisingly, we observe that for samples in classes of  “detached” and  “flat”, more predictions are correctly made by the model, indicating that the model takes into account the classes having less samples. We could also observe that the $F_1$-scores are similar in each class, indicating that the predictions do not depend much on the numbers of data in different classes. Hence, the CNN model is selected as the best one.
 
 \subsection{Error Analysis}
-From the confusion matrix shown in Figure \ref{fig:cnnconf}, there are a bunch of houses labelled “detached” and “terraced” being wrongly classified as “semi-detached”, which catches our eyes. Generally speaking, detached houses are standalone ones, semi-detached ones are $2$ houses sharing a wall in between, and terraced ones are multiple houses sharing walls with their neighbours. By taking a closer look into the images, it could be observed that some longer detached houses or shorter terraced houses look somehow similarly to semi-detached ones in their shapes, which explains why there are a lot of detached and terraced houses being classified as semi-detached ones. 
+From the confusion matrix shown in Figure \ref{fig:cnnconf}, there are a bunch of houses labelled “detached” and “terraced” being wrongly classified as “semi-detached”, which catches our eyes. Generally speaking, detached houses are standalone ones, semi-detached ones are $2$ properties sharing a wall in between, and terraced ones are multiple properties sharing walls with their neighbours. By taking a closer look into the images, it could be observed that some longer detached houses or shorter terraced houses look somehow similarly to semi-detached ones in their shapes, which explains why there are a lot of detached and terraced houses being classified as semi-detached ones. 
 
-In addition, a large amount of images are not captured in a perfect angle, and some images are blurry, or obstructed by some trees, which would also worsen the performance of the model. A better solution to the issues encountered would be taking into account the images from the inside of the houses, and not relying only on the street view data. By doing so, structures inside the houses would be clear. For instance, we might not be able to distinguish whether some houses share common walls, or a corridor from the street view data, but if we take pictures from the inside, everything would be clear.
+In addition, a large amount of images are not captured in a perfect angle, and some images are blurry, or obstructed by some trees, which would also worsen the performance of the model. A better solution to the issues would be taking into account the images from inside the houses, and not relying only on the street view data. By doing so, structures inside the houses would be clear. For instance, we might not be able to distinguish whether some houses share common walls, or a corridor from the street view data, but if pictures from inside the houses are provided, everything would be clear.
 
 \section{Conclusions}
-In this work, the MLP and CNN models are proposed in classifying types of properties using Google street view images, and CNN performs better in terms of the accuracy of the testing set. However, the accuracy of CNN in the testing set is not decent enough, showing that there might be issues within the images. By taking a closer look into the images, it could be observed that different types of properties might share similar structures that the model could not distinguish. It could also be observed that a large amount of images are somehow blurry, and some houses are crooked, making it challenging for the models to learn. More image data from inside of houses are suggested, and the novel method suggested in \cite{avelar2020superpixel} might help classifying types of properties.
+In this work, the MLP and CNN models are proposed in classifying types of properties using Google street view images, and CNN performs better in terms of the accuracy of the testing set. However, the accuracy of CNN in the testing set is not decent enough, showing that there might be issues within the images. By taking a closer look into the images, it could be observed that different types of properties might share similar structures that the model could not distinguish. It could also be observed that a large amount of images are somehow blurry, and some houses are crooked, making it challenging for the models to learn. Providing more image data from inside the houses are suggested, and the novel method suggested in \cite{avelar2020superpixel} might also help classifying types of properties.
 \newpage
 
 %the entries have to be in the file literature.bib
