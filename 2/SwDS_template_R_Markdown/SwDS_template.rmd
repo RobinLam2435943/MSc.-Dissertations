@@ -1,6 +1,6 @@
 ---
 output: 
-  bookdown::pdf_document2
+  pdf
 toc: false
 number_sections: true
 
@@ -47,10 +47,6 @@ header-includes:
 - \newcommand{\dottedline}[1]{\makebox[#1]{.\dotfill}}
 ---
 
-
-
-
-
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(knitr)
@@ -63,10 +59,6 @@ knitr::opts_chunk$set(echo = TRUE)
 print.all.code=FALSE
 #Setting this TRUE will include all code chunks in the PDF
 ```
-
-
-
-
 
 ```{=latex}
 \pagestyle{empty}
@@ -139,18 +131,18 @@ Title of work: \dottedline{8cm}
 
 I confirm that all this work is my own except where indicated, and that I have:
 \begin{itemize}
-\item	Clearly referenced/listed all sources as appropriate	 				
-\item	Referenced and put in inverted commas all quoted text (from books, web, etc)	
-\item	Given the sources of all pictures, data etc. that are not my own				
-\item	Not made any use of the report(s) or essay(s) of any other student(s) either past 	
-or present	
-\item	Not sought or used the help of any external professional academic agencies for the work
-\item	Acknowledged in appropriate places any help that I have received from others	(e.g. fellow students, technicians, statisticians, external sources)
-\item	Complied with any other plagiarism criteria specified in the Course handbook
+\item   Clearly referenced/listed all sources as appropriate                    
+\item   Referenced and put in inverted commas all quoted text (from books, web, etc)    
+\item   Given the sources of all pictures, data etc. that are not my own                
+\item   Not made any use of the report(s) or essay(s) of any other student(s) either past   
+or present  
+\item   Not sought or used the help of any external professional academic agencies for the work
+\item   Acknowledged in appropriate places any help that I have received from others    (e.g. fellow students, technicians, statisticians, external sources)
+\item   Complied with any other plagiarism criteria specified in the Course handbook
 \end{itemize}
 
 I understand that any false claim for this work will be penalised in accordance with
-the University regulations	(\url{https://teaching.maths.ed.ac.uk/main/msc-students/msc-programmes/statistics/data-science/assessment/academic-misconduct}).								
+the University regulations  (\url{https://teaching.maths.ed.ac.uk/main/msc-students/msc-programmes/statistics/data-science/assessment/academic-misconduct}).                                
 
 \vspace{1cm}
 
@@ -188,9 +180,6 @@ Date \dottedline{8cm}
 \bibliographystyle{abbrv}
 \clearpage
 ```
-
-
-
 ```{=latex}
 \section{Introduction}
 \label{sec:intro}
@@ -199,7 +188,6 @@ Here I will write a very good, precise and brief introduction.
 Particularly Section \ref{sec:methods} is good!
 \clearpage
 ```
-
 ```{=latex}
 \section{Methods}
 \label{sec:methods}
@@ -209,29 +197,25 @@ I should really cut this short, but BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaB
 % You can enter comments in LaTeX
 % like this.
 ```
+When you write outside of the LaTeX environment, you can use Markdown syntax. Some R Markdown basics: <https://rmarkdown.rstudio.com/authoring_basics.html>.
 
-
-When you write outside of the LaTeX environment, you can use Markdown syntax. Some R Markdown basics: [https://rmarkdown.rstudio.com/authoring_basics.html](https://rmarkdown.rstudio.com/authoring_basics.html).
-
-More in depth explanation is available in the book *RMarkdown for Scientists*:  
-[https://rmd4sci.njtierney.com](https://rmd4sci.njtierney.com).
+More in depth explanation is available in the book *RMarkdown for Scientists*:\
+<https://rmd4sci.njtierney.com>.
 
 <!-- To add a line break in R Markdown, you can end a line with two or more spaces, then type return-->
 
 Note that I start a new paragraph when I have an empty line like this. BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla. BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla. Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla. BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla.
 
-But I can also end a line with an empty line.
-You can enter display formulas like this using Latex syntax in the formula:
-$$
+But I can also end a line with an empty line. You can enter display formulas like this using Latex syntax in the formula: $$
 E = mc^2
-$$
-You can also enter in-line formulas like $c^2=a^2+b^2$ using LaTeX syntax.
+$$ You can also enter in-line formulas like $c^2=a^2+b^2$ using LaTeX syntax.
 
 \newpage
+
+```{=html}
 <!--You can enter comments in Markdown
 like this-->
-
-
+```
 ```{=latex}
 \subsection{Models}
 \label{sec:Models}
@@ -252,11 +236,7 @@ Techniques even better because.
  \item If they work.
 \end{enumerate}
 \clearpage
-
 ```
-
-
-
 ```{=latex}
 \section{Results}
 \label{sec:results}
@@ -415,8 +395,9 @@ Homework
 \hfill $\square$
 \clearpage
 ```
-
 ## Including Markdown and R code {#sec:IncludingMarkdown}
+
+```{=html}
 <!--
 Note that the syntax 
 # Section name
@@ -424,6 +405,7 @@ includes a section, while {#sec:label} will label it as sec:label, which can be 
 ## Section name creates a subsection, and 
 ## Section name creates a subsubsection.
 -->
+```
 This subsection is called Section \@ref(sec:IncludingMarkdown).
 
 ```{=latex}
@@ -437,21 +419,19 @@ When you click the **Knit** button a document will be generated that includes bo
 summary(cars)
 ```
 
-
 You can also embed plots, for example:
 
 ```{r pressure-plot, echo=print.all.code, fig.cap = "An amazing plot"}
 plot(pressure)
 ```
 
-In the above R code chunk, `pressure-plot` is the chunk name. Note that the `echo = print.all.code` parameter was added to the code chunk to potentially prevent printing of the R code that generated the plot (by default, `print.all.code=FALSE`, but this can be changed at the beginning of the document to display all of the code). 
+In the above R code chunk, `pressure-plot` is the chunk name. Note that the `echo = print.all.code` parameter was added to the code chunk to potentially prevent printing of the R code that generated the plot (by default, `print.all.code=FALSE`, but this can be changed at the beginning of the document to display all of the code).
 
 We can reference the pressure plot within a Markdown chunk as Figure \@ref(fig:pressure-plot).
 
 ```{=latex}
 We can reference the pressure plot within a LaTeX chunk as Figure \ref{fig:pressure-plot}.
 ```
-
 ```{r mtcars, echo=print.all.code}
 data(mtcars)
 dt <- mtcars[1:5, 1:6]
@@ -468,15 +448,12 @@ kbl(dt, caption="Table in plain LaTeX format")
 kbl(dt, booktabs = T,caption="Table with booktabs") 
 ```
 
-We have two tables, Table \@ref(tab:MtcarsTable1) and Table \@ref(tab:MtcarsTable2). Please make sure not to include dots (.) or other special characters in the names of the R code chunks (such as MtcarsTable2), as this may cause issues with the labels. 
+We have two tables, Table \@ref(tab:MtcarsTable1) and Table \@ref(tab:MtcarsTable2). Please make sure not to include dots (.) or other special characters in the names of the R code chunks (such as MtcarsTable2), as this may cause issues with the labels.
 
 ```{=latex}
 We can reference the two tables within a LaTeX chunk as Table \ref{tab:MtcarsTable1} and Table \ref{tab:MtcarsTable2}.
 ```
-
 You can see more information on how to create nice tables in R Markdown at \url{https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf} and \url{https://rfortherestofus.com/2019/11/how-to-make-beautiful-tables-in-r/}.
-
-
 
 \clearpage
 

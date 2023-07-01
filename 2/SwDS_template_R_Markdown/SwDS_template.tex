@@ -1,75 +1,174 @@
-# %% [code]
----
-output: 
-  bookdown::pdf_document2
-toc: false
-number_sections: true
+% Options for packages loaded elsewhere
+\PassOptionsToPackage{unicode}{hyperref}
+\PassOptionsToPackage{hyphens}{url}
+%
+\documentclass[
+  11pt,
+  twoside,
+  11pt]{article}
+\usepackage{amsmath,amssymb}
+\usepackage{iftex}
+\ifPDFTeX
+  \usepackage[T1]{fontenc}
+  \usepackage[utf8]{inputenc}
+  \usepackage{textcomp} % provide euro and other symbols
+\else % if luatex or xetex
+  \usepackage{unicode-math} % this also loads fontspec
+  \defaultfontfeatures{Scale=MatchLowercase}
+  \defaultfontfeatures[\rmfamily]{Ligatures=TeX,Scale=1}
+\fi
+\usepackage{lmodern}
+\ifPDFTeX\else
+  % xetex/luatex font selection
+\fi
+% Use upquote if available, for straight quotes in verbatim environments
+\IfFileExists{upquote.sty}{\usepackage{upquote}}{}
+\IfFileExists{microtype.sty}{% use microtype if available
+  \usepackage[]{microtype}
+  \UseMicrotypeSet[protrusion]{basicmath} % disable protrusion for tt fonts
+}{}
+\makeatletter
+\@ifundefined{KOMAClassName}{% if non-KOMA class
+  \IfFileExists{parskip.sty}{%
+    \usepackage{parskip}
+  }{% else
+    \setlength{\parindent}{0pt}
+    \setlength{\parskip}{6pt plus 2pt minus 1pt}}
+}{% if KOMA class
+  \KOMAoptions{parskip=half}}
+\makeatother
+\usepackage{xcolor}
+\usepackage{color}
+\usepackage{fancyvrb}
+\newcommand{\VerbBar}{|}
+\newcommand{\VERB}{\Verb[commandchars=\\\{\}]}
+\DefineVerbatimEnvironment{Highlighting}{Verbatim}{commandchars=\\\{\}}
+% Add ',fontsize=\small' for more characters per line
+\usepackage{framed}
+\definecolor{shadecolor}{RGB}{248,248,248}
+\newenvironment{Shaded}{\begin{snugshade}}{\end{snugshade}}
+\newcommand{\AlertTok}[1]{\textcolor[rgb]{0.94,0.16,0.16}{#1}}
+\newcommand{\AnnotationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\AttributeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\BaseNTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\BuiltInTok}[1]{#1}
+\newcommand{\CharTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\CommentTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\CommentVarTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ConstantTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\ControlFlowTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\DataTypeTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{#1}}
+\newcommand{\DecValTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\DocumentationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\ErrorTok}[1]{\textcolor[rgb]{0.64,0.00,0.00}{\textbf{#1}}}
+\newcommand{\ExtensionTok}[1]{#1}
+\newcommand{\FloatTok}[1]{\textcolor[rgb]{0.00,0.00,0.81}{#1}}
+\newcommand{\FunctionTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\ImportTok}[1]{#1}
+\newcommand{\InformationTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\newcommand{\KeywordTok}[1]{\textcolor[rgb]{0.13,0.29,0.53}{\textbf{#1}}}
+\newcommand{\NormalTok}[1]{#1}
+\newcommand{\OperatorTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\OtherTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{#1}}
+\newcommand{\PreprocessorTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textit{#1}}}
+\newcommand{\RegionMarkerTok}[1]{#1}
+\newcommand{\SpecialCharTok}[1]{\textcolor[rgb]{0.81,0.36,0.00}{\textbf{#1}}}
+\newcommand{\SpecialStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\StringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\VariableTok}[1]{\textcolor[rgb]{0.00,0.00,0.00}{#1}}
+\newcommand{\VerbatimStringTok}[1]{\textcolor[rgb]{0.31,0.60,0.02}{#1}}
+\newcommand{\WarningTok}[1]{\textcolor[rgb]{0.56,0.35,0.01}{\textbf{\textit{#1}}}}
+\usepackage{longtable,booktabs,array}
+\usepackage{calc} % for calculating minipage widths
+% Correct order of tables after \paragraph or \subparagraph
+\usepackage{etoolbox}
+\makeatletter
+\patchcmd\longtable{\par}{\if@noskipsec\mbox{}\fi\par}{}{}
+\makeatother
+% Allow footnotes in longtable head/foot
+\IfFileExists{footnotehyper.sty}{\usepackage{footnotehyper}}{\usepackage{footnote}}
+\makesavenoteenv{longtable}
+\usepackage{graphicx}
+\makeatletter
+\def\maxwidth{\ifdim\Gin@nat@width>\linewidth\linewidth\else\Gin@nat@width\fi}
+\def\maxheight{\ifdim\Gin@nat@height>\textheight\textheight\else\Gin@nat@height\fi}
+\makeatother
+% Scale images if necessary, so that they will not overflow the page
+% margins by default, and it is still possible to overwrite the defaults
+% using explicit options in \includegraphics[width, height, ...]{}
+\setkeys{Gin}{width=\maxwidth,height=\maxheight,keepaspectratio}
+% Set default figure placement to htbp
+\makeatletter
+\def\fps@figure{htbp}
+\makeatother
+\setlength{\emergencystretch}{3em} % prevent overfull lines
+\providecommand{\tightlist}{%
+  \setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
+\setcounter{secnumdepth}{5}
+\usepackage{geometry}
+\usepackage{enumerate}
+\usepackage{latexsym,booktabs}
+\usepackage{amsmath,amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage[singlespacing]{setspace}
+\usepackage{calc}
+\geometry{a4paper,left=2cm,right=2.0cm, top=2cm, bottom=2.0cm}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\newtheorem{Definition}{Definition}
+\newtheorem{Theorem}{Theorem}
+\newtheorem{Lemma}{Lemma}
+\newtheorem{Corollary}{Corollary}
+\newtheorem{Proposition}{Proposition}
+\newtheorem{Algorithm}{Algorithm}
+\numberwithin{Theorem}{section}
+\numberwithin{Definition}{section}
+\numberwithin{Lemma}{section}
+\numberwithin{Algorithm}{section}
+\numberwithin{equation}{section}
+\newcommand{\dottedline}[1]{\makebox[#1]{.\dotfill}}
+\usepackage{booktabs}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{wrapfig}
+\usepackage{float}
+\usepackage{colortbl}
+\usepackage{pdflscape}
+\usepackage{tabu}
+\usepackage{threeparttable}
+\usepackage{threeparttablex}
+\usepackage[normalem]{ulem}
+\usepackage{makecell}
+\usepackage{xcolor}
+\ifLuaTeX
+  \usepackage{selnolig}  % disable illegal ligatures
+\fi
+\IfFileExists{bookmark.sty}{\usepackage{bookmark}}{\usepackage{hyperref}}
+\IfFileExists{xurl.sty}{\usepackage{xurl}}{} % add URL line breaks if available
+\urlstyle{same}
+\hypersetup{
+  hidelinks,
+  pdfcreator={LaTeX via pandoc}}
 
-documentclass: article
-classoption:
-  - twoside
-  - 11pt
-fontsize: 11pt
-header-includes:
-- \usepackage{geometry}
-- \usepackage{enumerate}
-- \usepackage{latexsym,booktabs}
-- \usepackage{amsmath,amssymb}
-- \usepackage{graphicx}
-- \usepackage{hyperref}
-- \usepackage[singlespacing]{setspace}
-- \usepackage{calc}
-- \geometry{a4paper,left=2cm,right=2.0cm, top=2cm, bottom=2.0cm}
-- \usepackage{booktabs}
-- \usepackage{longtable}
-- \usepackage{array}
-- \usepackage{multirow}
-- \usepackage{wrapfig}
-- \usepackage{float}
-- \usepackage{colortbl}
-- \usepackage{pdflscape}
-- \usepackage{tabu}
-- \usepackage{threeparttable} 
-- \usepackage{threeparttablex} 
-- \usepackage[normalem]{ulem} 
-- \usepackage{makecell}
-- \usepackage{xcolor}
-- \newtheorem{Definition}{Definition}
-- \newtheorem{Theorem}{Theorem}
-- \newtheorem{Lemma}{Lemma}
-- \newtheorem{Corollary}{Corollary}
-- \newtheorem{Proposition}{Proposition}
-- \newtheorem{Algorithm}{Algorithm}
-- \numberwithin{Theorem}{section}
-- \numberwithin{Definition}{section}
-- \numberwithin{Lemma}{section}
-- \numberwithin{Algorithm}{section}
-- \numberwithin{equation}{section}
-- \newcommand{\dottedline}[1]{\makebox[#1]{.\dotfill}}
----
+\author{}
+\date{\vspace{-2.5em}}
 
+\begin{document}
 
-
-
-
-```{r setup, include=FALSE}
-library(tidyverse)
-library(knitr)
-if (!require("kableExtra"))
-{
-  install.packages("kableExtra")
-  library(kableExtra)
-}
-knitr::opts_chunk$set(echo = TRUE)
-print.all.code=FALSE
-#Setting this TRUE will include all code chunks in the PDF
-```
-
-
-
-
-
-```{=latex}
 \pagestyle{empty}
 
 % =============================================================================
@@ -140,18 +239,18 @@ Title of work: \dottedline{8cm}
 
 I confirm that all this work is my own except where indicated, and that I have:
 \begin{itemize}
-\item	Clearly referenced/listed all sources as appropriate	 				
-\item	Referenced and put in inverted commas all quoted text (from books, web, etc)	
-\item	Given the sources of all pictures, data etc. that are not my own				
-\item	Not made any use of the report(s) or essay(s) of any other student(s) either past 	
-or present	
-\item	Not sought or used the help of any external professional academic agencies for the work
-\item	Acknowledged in appropriate places any help that I have received from others	(e.g. fellow students, technicians, statisticians, external sources)
-\item	Complied with any other plagiarism criteria specified in the Course handbook
+\item   Clearly referenced/listed all sources as appropriate                    
+\item   Referenced and put in inverted commas all quoted text (from books, web, etc)    
+\item   Given the sources of all pictures, data etc. that are not my own                
+\item   Not made any use of the report(s) or essay(s) of any other student(s) either past   
+or present  
+\item   Not sought or used the help of any external professional academic agencies for the work
+\item   Acknowledged in appropriate places any help that I have received from others    (e.g. fellow students, technicians, statisticians, external sources)
+\item   Complied with any other plagiarism criteria specified in the Course handbook
 \end{itemize}
 
 I understand that any false claim for this work will be penalised in accordance with
-the University regulations	(\url{https://teaching.maths.ed.ac.uk/main/msc-students/msc-programmes/statistics/data-science/assessment/academic-misconduct}).								
+the University regulations  (\url{https://teaching.maths.ed.ac.uk/main/msc-students/msc-programmes/statistics/data-science/assessment/academic-misconduct}).                                
 
 \vspace{1cm}
 
@@ -188,20 +287,14 @@ Date \dottedline{8cm}
 \nocite{*}
 \bibliographystyle{abbrv}
 \clearpage
-```
 
-
-
-```{=latex}
 \section{Introduction}
 \label{sec:intro}
 
 Here I will write a very good, precise and brief introduction.
 Particularly Section \ref{sec:methods} is good!
 \clearpage
-```
 
-```{=latex}
 \section{Methods}
 \label{sec:methods}
 In the following, I explain what did I do and how.
@@ -209,31 +302,20 @@ In the following, I explain what did I do and how.
 I should really cut this short, but BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla. Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla. BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla. BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla.
 % You can enter comments in LaTeX
 % like this.
-```
 
+When you write outside of the LaTeX environment, you can use Markdown syntax. Some R Markdown basics: \url{https://rmarkdown.rstudio.com/authoring_basics.html}.
 
-When you write outside of the LaTeX environment, you can use Markdown syntax. Some R Markdown basics: [https://rmarkdown.rstudio.com/authoring_basics.html](https://rmarkdown.rstudio.com/authoring_basics.html).
-
-More in depth explanation is available in the book *RMarkdown for Scientists*:  
-[https://rmd4sci.njtierney.com](https://rmd4sci.njtierney.com).
-
-<!-- To add a line break in R Markdown, you can end a line with two or more spaces, then type return-->
+More in depth explanation is available in the book \emph{RMarkdown for Scientists}:\\
+\url{https://rmd4sci.njtierney.com}.
 
 Note that I start a new paragraph when I have an empty line like this. BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla. BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla. Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla. BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla BlaBlaBlaBla BlaBlaBlaBlaBla Bla Bla BlaBlaBla Bla Bla BlaBlaBla Bla BlaBla BlaBla Bla BlaBlaBlaBla Bla BlaBla Bla Bla Bla BlaBla.
 
-But I can also end a line with an empty line.
-You can enter display formulas like this using Latex syntax in the formula:
-$$
+But I can also end a line with an empty line. You can enter display formulas like this using Latex syntax in the formula: \[
 E = mc^2
-$$
-You can also enter in-line formulas like $c^2=a^2+b^2$ using LaTeX syntax.
+\] You can also enter in-line formulas like \(c^2=a^2+b^2\) using LaTeX syntax.
 
 \newpage
-<!--You can enter comments in Markdown
-like this-->
 
-
-```{=latex}
 \subsection{Models}
 \label{sec:Models}
 
@@ -254,11 +336,6 @@ Techniques even better because.
 \end{enumerate}
 \clearpage
 
-```
-
-
-
-```{=latex}
 \section{Results}
 \label{sec:results}
 I this section, I explain what did I discover.
@@ -415,73 +492,94 @@ $\overline{\Omega}_1 \subseteq  \overline{\Omega}_0 $.
 Homework
 \hfill $\square$
 \clearpage
-```
 
-## Including Markdown and R code {#sec:IncludingMarkdown}
-<!--
-Note that the syntax 
-# Section name
-includes a section, while {#sec:label} will label it as sec:label, which can be referenced as \@ref(sec:label) from Markdown, or \ref{sec:label} from a LaTeX chunk.
-## Section name creates a subsection, and 
-## Section name creates a subsubsection.
--->
-This subsection is called Section \@ref(sec:IncludingMarkdown).
+\hypertarget{sec:IncludingMarkdown}{%
+\subsection{Including Markdown and R code}\label{sec:IncludingMarkdown}}
 
-```{=latex}
+This subsection is called Section \ref{sec:IncludingMarkdown}.
+
 Even from LaTeX, this subsection is still called Section \ref{sec:IncludingMarkdown}.
-```
-Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
 
-When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see \url{http://rmarkdown.rstudio.com}.
 
-```{r cars}
-summary(cars)
-```
+When you click the \textbf{Knit} button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
 
+\begin{Shaded}
+\begin{Highlighting}[]
+\FunctionTok{summary}\NormalTok{(cars)}
+\end{Highlighting}
+\end{Shaded}
+
+\begin{verbatim}
+##      speed           dist       
+##  Min.   : 4.0   Min.   :  2.00  
+##  1st Qu.:12.0   1st Qu.: 26.00  
+##  Median :15.0   Median : 36.00  
+##  Mean   :15.4   Mean   : 42.98  
+##  3rd Qu.:19.0   3rd Qu.: 56.00  
+##  Max.   :25.0   Max.   :120.00
+\end{verbatim}
 
 You can also embed plots, for example:
 
-```{r pressure-plot, echo=print.all.code, fig.cap = "An amazing plot"}
-plot(pressure)
-```
+\begin{figure}
+\centering
+\includegraphics{SwDS_template_files/figure-latex/pressure-plot-1.pdf}
+\caption{\label{fig:pressure-plot}An amazing plot}
+\end{figure}
 
-In the above R code chunk, `pressure-plot` is the chunk name. Note that the `echo = print.all.code` parameter was added to the code chunk to potentially prevent printing of the R code that generated the plot (by default, `print.all.code=FALSE`, but this can be changed at the beginning of the document to display all of the code). 
+In the above R code chunk, \texttt{pressure-plot} is the chunk name. Note that the \texttt{echo\ =\ print.all.code} parameter was added to the code chunk to potentially prevent printing of the R code that generated the plot (by default, \texttt{print.all.code=FALSE}, but this can be changed at the beginning of the document to display all of the code).
 
-We can reference the pressure plot within a Markdown chunk as Figure \@ref(fig:pressure-plot).
+We can reference the pressure plot within a Markdown chunk as Figure \ref{fig:pressure-plot}.
 
-```{=latex}
 We can reference the pressure plot within a LaTeX chunk as Figure \ref{fig:pressure-plot}.
-```
 
-```{r mtcars, echo=print.all.code}
-data(mtcars)
-dt <- mtcars[1:5, 1:6]
-```
+\begin{table}
 
-```{r MtcarsTable1, echo=print.all.code}
-#Plain LaTeX table
-#knitr::opts_current$set(label = "mtcars.table1")
-kbl(dt, caption="Table in plain LaTeX format")
-```
+\caption{\label{tab:MtcarsTable1}Table in plain LaTeX format}
+\centering
+\begin{tabular}[t]{l|r|r|r|r|r|r}
+\hline
+  & mpg & cyl & disp & hp & drat & wt\\
+\hline
+Mazda RX4 & 21.0 & 6 & 160 & 110 & 3.90 & 2.620\\
+\hline
+Mazda RX4 Wag & 21.0 & 6 & 160 & 110 & 3.90 & 2.875\\
+\hline
+Datsun 710 & 22.8 & 4 & 108 & 93 & 3.85 & 2.320\\
+\hline
+Hornet 4 Drive & 21.4 & 6 & 258 & 110 & 3.08 & 3.215\\
+\hline
+Hornet Sportabout & 18.7 & 8 & 360 & 175 & 3.15 & 3.440\\
+\hline
+\end{tabular}
+\end{table}
 
-```{r MtcarsTable2, echo=print.all.code}
-#Improved look with booktabs
-kbl(dt, booktabs = T,caption="Table with booktabs") 
-```
+\begin{table}
 
-We have two tables, Table \@ref(tab:MtcarsTable1) and Table \@ref(tab:MtcarsTable2). Please make sure not to include dots (.) or other special characters in the names of the R code chunks (such as MtcarsTable2), as this may cause issues with the labels. 
+\caption{\label{tab:MtcarsTable2}Table with booktabs}
+\centering
+\begin{tabular}[t]{lrrrrrr}
+\toprule
+  & mpg & cyl & disp & hp & drat & wt\\
+\midrule
+Mazda RX4 & 21.0 & 6 & 160 & 110 & 3.90 & 2.620\\
+Mazda RX4 Wag & 21.0 & 6 & 160 & 110 & 3.90 & 2.875\\
+Datsun 710 & 22.8 & 4 & 108 & 93 & 3.85 & 2.320\\
+Hornet 4 Drive & 21.4 & 6 & 258 & 110 & 3.08 & 3.215\\
+Hornet Sportabout & 18.7 & 8 & 360 & 175 & 3.15 & 3.440\\
+\bottomrule
+\end{tabular}
+\end{table}
 
-```{=latex}
+We have two tables, Table \ref{tab:MtcarsTable1} and Table \ref{tab:MtcarsTable2}. Please make sure not to include dots (.) or other special characters in the names of the R code chunks (such as MtcarsTable2), as this may cause issues with the labels.
+
 We can reference the two tables within a LaTeX chunk as Table \ref{tab:MtcarsTable1} and Table \ref{tab:MtcarsTable2}.
-```
 
 You can see more information on how to create nice tables in R Markdown at \url{https://haozhu233.github.io/kableExtra/awesome_table_in_pdf.pdf} and \url{https://rfortherestofus.com/2019/11/how-to-make-beautiful-tables-in-r/}.
 
-
-
 \clearpage
 
-```{=latex}
 \section{Conclusion}
 \label{sec:conclusion}
 In this section, I explain what what do my results mean.
@@ -507,4 +605,5 @@ Something.
 \label{app:two}
 
 Something else.
-```
+
+\end{document}
