@@ -1,0 +1,29 @@
+---
+title: "Earthquake Forecasting"
+subtitle: "Dissertation Project 2"
+author: "Robin Lin s2435943"
+date: "today"
+date-format: "MMMM YYYY"
+format: 
+  pdf:
+    code-line-numbers: true
+editor: visual
+highlight-style: atom-one
+---
+
+```{r setup, include = FALSE}
+library(tidyverse)
+library(knitr)
+if (!require("kableExtra"))
+{
+  install.packages("kableExtra")
+  library(kableExtra)
+}
+knitr::opts_chunk$set(echo = TRUE)
+print.all.code = FALSE
+#Setting this TRUE will include all code chunks in the PDF
+```
+
+```{r}
+
+```
