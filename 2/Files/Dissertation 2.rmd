@@ -22,6 +22,19 @@ if (!require("kableExtra"))
 knitr::opts_chunk$set(echo = TRUE)
 print.all.code = FALSE
 #Setting this TRUE will include all code chunks in the PDF
+if (!require("INLA"))
+{
+  	install.packages("remotes")
+		remotes::install_github("inlabru-org/inlabru")
+		
+		install.packages(
+		  "INLA",
+		  repos = c(getOption("repos"), INLA="https://inla.r-inla-download.org/R/testing"),
+		  dep = TRUE
+		)
+		
+		remotes::install_github("edinburgh-seismicity-hub/ETAS.inlabru")
+}
 ```
 
 ```{r}
