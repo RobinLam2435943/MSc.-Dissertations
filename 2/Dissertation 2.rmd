@@ -1,0 +1,63 @@
+---
+title: "Earthquake Forecasting"
+subtitle: "Dissertation Project 2"
+author: "Robin Lin s2435943"
+date: "today"
+date-format: "MMMM YYYY"
+format: 
+  pdf:
+    page-layout: full
+    code-line-numbers: true
+editor: visual
+highlight-style: atom-one
+---
+
+```{r setup, include = FALSE}
+if(!require(tidyverse)){
+    install.packages('tidyverse')
+}
+library(tidyverse)
+
+if(!require(knitr)){
+    install.packages('knitr')
+}
+library(knitr)
+
+if(!require(kableExtra)){
+    install.packages('kableExtra')
+}
+library(kableExtra)
+
+knitr::opts_chunk$set(echo = TRUE)
+print.all.code = FALSE
+#Setting this TRUE will include all code chunks in the PDF
+
+if(!require(INLA)){
+    install.packages('remotes')
+    remotes::install_github('inlabru-org/inlabru')
+
+    install.packages(
+      'INLA',
+      repos = c(getOption('repos'), 
+                INLA = 'https://inla.r-inla-download.org/R/testing'),
+      dep = TRUE
+    )
+
+    remotes::install_github('edinburgh-seismicity-hub/ETAS.inlabru')
+}
+
+if(!require(tidyquant)){
+        install.packages('tidyquant')
+}
+```
+
+```{r, message = FALSE, warning = FALSE}
+library(ETAS.inlabru)
+library(ggplot2)
+library(dplyr)
+library(magrittr)
+library(tidyquant)
+
+# Increase num.threads if you have more cores on your computer
+INLA::inla.setOption(num.threads = 2)
+```
