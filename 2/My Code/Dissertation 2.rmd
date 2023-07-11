@@ -16,17 +16,17 @@ highlight-style: atom-one
 if(!require(tidyverse)){
     install.packages('tidyverse')
 }
-library(tidyverse)
+require(tidyverse)
 
 if(!require(knitr)){
     install.packages('knitr')
 }
-library(knitr)
+require(knitr)
 
 if(!require(kableExtra)){
     install.packages('kableExtra')
 }
-library(kableExtra)
+require(kableExtra)
 
 knitr::opts_chunk$set(echo = TRUE)
 print.all.code = FALSE
@@ -52,11 +52,11 @@ if(!require(tidyquant)){
 ```
 
 ```{r, message = FALSE, warning = FALSE}
-library(ETAS.inlabru)
-library(ggplot2)
-library(dplyr)
-library(magrittr)
-library(tidyquant)
+require(ETAS.inlabru)
+require(ggplot2)
+require(dplyr)
+require(magrittr)
+require(tidyquant)
 
 # Increase num.threads if you have more cores on your computer
 INLA::inla.setOption(num.threads = 2)
