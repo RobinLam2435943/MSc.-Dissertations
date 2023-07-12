@@ -30,7 +30,6 @@ require(kableExtra)
 
 knitr::opts_chunk$set(echo = TRUE)
 print.all.code = FALSE
-#Setting this TRUE will include all code chunks in the PDF
 
 if(!require(INLA)){
     install.packages('remotes')
@@ -47,7 +46,7 @@ if(!require(INLA)){
 }
 
 if(!require(tidyquant)){
-        install.packages('tidyquant')
+    install.packages('tidyquant')
 }
 ```
 
@@ -58,6 +57,5 @@ require(dplyr)
 require(magrittr)
 require(tidyquant)
 
-# Increase num.threads if you have more cores on your computer
 INLA::inla.setOption(num.threads = 2)
 ```
