@@ -14,6 +14,7 @@ knitr::opts_chunk$set(
   echo = TRUE
 )
 ```
+
 ```{r setup, include=TRUE,message=FALSE,warning=FALSE}
 library(ETAS.inlabru)
 library(ggplot2)
@@ -24,24 +25,24 @@ INLA::inla.setOption(num.threads = 2)
 
 # Introduction
 
-This tutorial shows how to use the `ETAS.inlabru` package to generate a synthetic catalogue from a temporal ETAS model and how to fit an ETAS model on this data. We also show how to retrieve the posterior distribution of the parameters and other quantity of interest. 
+This tutorial shows how to use the `ETAS.inlabru` package to generate a synthetic catalogue from a temporal ETAS model and how to fit an ETAS model on this data. We also show how to retrieve the posterior distribution of the parameters and other quantity of interest.
 
 For a brief introduction to the ETAS model we refer to the tutorial on real earthquake data.
 
-# Generate a synthetic catalogue 
+# Generate a synthetic catalogue
 
-The function `generate_temporal_ETAS_synthetic()` can be used to generate synthetic catalogues from a temporal ETAS model with fixed parameters spanning a given interval of time. The `generate_temporal_ETAS_synthetic()` takes as input 
+The function `generate_temporal_ETAS_synthetic()` can be used to generate synthetic catalogues from a temporal ETAS model with fixed parameters spanning a given interval of time. The `generate_temporal_ETAS_synthetic()` takes as input
 
-* `theta`: a `list` of ETAS parameters with names `mu`, `K`, `alpha`, `c`, and `p`, corresponding to the ETAS parameters.
-* `beta.p`: the parameter of the magnitude distribution
-* `M0`: cutoff magnitude, all the generated event will have magnitude greater than `M0`.
-* `T1`: starting time of the catalogue (the unit of measure depends on the unit used to fit the model).
-* `T2`: end time of the catalogue (the unit of measure depends on the unit used to fit the model).
-* `Ht`: set of known events. They can also be between `T1` and `T2`, this is useful when we want to generate catalogues with imposed events. If it is `NULL` no events are imposed.
+-   `theta`: a `list` of ETAS parameters with names `mu`, `K`, `alpha`, `c`, and `p`, corresponding to the ETAS parameters.
+-   `beta.p`: the parameter of the magnitude distribution
+-   `M0`: cutoff magnitude, all the generated event will have magnitude greater than `M0`.
+-   `T1`: starting time of the catalogue (the unit of measure depends on the unit used to fit the model).
+-   `T2`: end time of the catalogue (the unit of measure depends on the unit used to fit the model).
+-   `Ht`: set of known events. They can also be between `T1` and `T2`, this is useful when we want to generate catalogues with imposed events. If it is `NULL` no events are imposed.
 
 The function returns a `list` of `data.frame`, each element of the output `list` corresponds to a different generation. The `data.frame` have three columns: occurence time (`ts`), magnitude (`magnitudes`), a the generation identifier (`gen`). The generation identifier uses the following convention, $-1$ indicates the events in `Ht` with time between `T1` and `T2`, $0$ indicates the first generation offspring of the events with `gen` equal $-1$, $1$ indicates background events, $2$ all the offspring of the events with `gen` equal $0$ or $1$, $3$ indicates all the offspring of the events with `gen` equal $2$, $4$ indicates all the offspring of the events with `gen` equal $3$, and so on. To obtain a unique `data.frame` containing all the simulated events it is sufficient to bind by rows all the generations.
 
-The code below generates a synthetic catalogue of events with magnitude greater than $2.5$ according to a temporal ETAS model with parameters equal to the vector `true.param`. The value of the parameters is equal to the posterior mean of the parameters obtained fitting a model on the L'Aquila seismic sequence as it is done in the tutorial on real data. Also the parameter $\beta$ of the magnitude distribution comes from the same example. 
+The code below generates a synthetic catalogue of events with magnitude greater than $2.5$ according to a temporal ETAS model with parameters equal to the vector `true.param`. The value of the parameters is equal to the posterior mean of the parameters obtained fitting a model on the L'Aquila seismic sequence as it is done in the tutorial on real data. Also the parameter $\beta$ of the magnitude distribution comes from the same example.
 
 ```{r}
 set.seed(111)
@@ -99,18 +100,18 @@ inlabru::multiplot(pl1, pl2, cols = 2)
 
 # Prepare data for model fitting
 
-In order to fit a model on the synthetic catalogue we need to 
+In order to fit a model on the synthetic catalogue we need to
 
-1. set parameters priors
-2. set initial value of the parameters
-3. set `inlabru` options
-4. prepare the data for model fitting
+1.  set parameters priors
+2.  set initial value of the parameters
+3.  set `inlabru` options
+4.  prepare the data for model fitting
 
-To set the priors we need to create a list of copula transformation (or simply link) functions. This is because our method works with an internal representation of the parameters in which each parameter has a Gaussian distribution. We need the function to transform the parameters in the original ETAS scale and to set a prior for them. The `ETAS.inlabru` package offers four different functions corresponding to four different prior distributions. The functions are `gamma_t`, `unif_t`, `exp_t`, `loggaus_t` which corresponds to a Gamma distribution, a Uniform distribution, an Exponential distribution and a Log-Gaussian distribution. We also provide the inverse of this functions to retrieve the value of the parameters in the internal scale given a value in the ETAS scale. These are `inv_gamma_t`, `inv_unif_t`, `exp_t`, and `inv_loggaus_t`.    
+To set the priors we need to create a list of copula transformation (or simply link) functions. This is because our method works with an internal representation of the parameters in which each parameter has a Gaussian distribution. We need the function to transform the parameters in the original ETAS scale and to set a prior for them. The `ETAS.inlabru` package offers four different functions corresponding to four different prior distributions. The functions are `gamma_t`, `unif_t`, `exp_t`, `loggaus_t` which corresponds to a Gamma distribution, a Uniform distribution, an Exponential distribution and a Log-Gaussian distribution. We also provide the inverse of this functions to retrieve the value of the parameters in the internal scale given a value in the ETAS scale. These are `inv_gamma_t`, `inv_unif_t`, `exp_t`, and `inv_loggaus_t`.
 
-For this example we are going to consider the following priors for the parameters 
+For this example we are going to consider the following priors for the parameters
 
-
+```{=tex}
 \begin{align*}
 \mu & \sim \Gamma(0.3, 0.6) \\
 K & \sim \text{Unif}(0,10) \\
@@ -118,8 +119,8 @@ K & \sim \text{Unif}(0,10) \\
 c & \sim \text{Unif}(0,10) \\ 
 p & \sim \text{Unif}(1,10)
 \end{align*}
-
-To `list` of link functions corresponding to the above priors is 
+```
+To `list` of link functions corresponding to the above priors is
 
 ```{r}
 # set copula transformations list
@@ -132,7 +133,7 @@ link.f <- list(
 )
 ```
 
-The initial value of the parameters for the `inlabru` algorithm must be specified in the internal scale of the parameters. For this reason, it is useful to create a `list` of inverse link functions so that we can specify the initial value of the parameters in the ETAS scale and easily retrieve the corresponding value of the parameters in the internal scale. This can be done as shown below 
+The initial value of the parameters for the `inlabru` algorithm must be specified in the internal scale of the parameters. For this reason, it is useful to create a `list` of inverse link functions so that we can specify the initial value of the parameters in the ETAS scale and easily retrieve the corresponding value of the parameters in the internal scale. This can be done as shown below
 
 ```{r}
 # set inverse copula transformations list
@@ -158,12 +159,12 @@ th.init <- list(
 )
 ```
 
-Also the `inlabru` options have to be provided in a `list`, the main elements of the `list` are: 
+Also the `inlabru` options have to be provided in a `list`, the main elements of the `list` are:
 
-* `bru_verbose`: number indicating the type of visual output. Set it to 0 for no output.
-* `bru_max_iter`: maximum number of iterations. If we do not set `max_step` the `inlabru` algorithm stops when the stopping criterion is met. However, setting `max_step` to values smaller than 1 forces the algorithm to run for exactly `bru_max_iter` iterations.
-* `bru_method`: for what is relevant here, the only thing that we may need to set is the `max_step` argument. If the algorithm does not converge without fixing a `max_step` then we suggest to try to fix it to some value below 1, in our experience $0.5$ or $0.2$ works well. In the example below the line setting `bru_method` is commented.
-* `bru_initial`: `list` of initial values created before.
+-   `bru_verbose`: number indicating the type of visual output. Set it to 0 for no output.
+-   `bru_max_iter`: maximum number of iterations. If we do not set `max_step` the `inlabru` algorithm stops when the stopping criterion is met. However, setting `max_step` to values smaller than 1 forces the algorithm to run for exactly `bru_max_iter` iterations.
+-   `bru_method`: for what is relevant here, the only thing that we may need to set is the `max_step` argument. If the algorithm does not converge without fixing a `max_step` then we suggest to try to fix it to some value below 1, in our experience $0.5$ or $0.2$ works well. In the example below the line setting `bru_method` is commented.
+-   `bru_initial`: `list` of initial values created before.
 
 ```{r}
 # set up list of bru options
@@ -186,15 +187,15 @@ synth.cat.df$idx.p <- seq_len(nrow(synth.cat.df))
 
 # Model Fitting
 
-The function `Temporal.ETAS` fit the ETAS model and returns a `bru` object as output. The required inputs are: 
+The function `Temporal.ETAS` fit the ETAS model and returns a `bru` object as output. The required inputs are:
 
-* `total.data`: `data.frame` containing the observed events. It have to be in the format described in the previous Section.
-* `M0`: cutoff magnitude. All the events in `total.data` must have magnitude greater or equal to this number.
-* `T1`: starting time of the time interval on which we want to fit the model.
-* `T2`: end time of the time interval on which we want to fit the model.
-* `link.functions`: `list` of copula transformation functions in the format described in previous sections.
-* `coef.t.`, `delta.t.`, `N.max.`: parameters of the temporal binning. The binning strategy is described in Appendix B of the paper  [Approximation of Bayesian Hawkes process with `inlabru`](https://onlinelibrary.wiley.com/doi/full/10.1002/env.2798). The parameters corresponds to `coef.t.`$=\delta$, `delta.t.`$=\Delta$, and `N.max.`$=n_{\max}$.
-* `bru.opt`: `list` of `inlabru` options as described in the previous Section.
+-   `total.data`: `data.frame` containing the observed events. It have to be in the format described in the previous Section.
+-   `M0`: cutoff magnitude. All the events in `total.data` must have magnitude greater or equal to this number.
+-   `T1`: starting time of the time interval on which we want to fit the model.
+-   `T2`: end time of the time interval on which we want to fit the model.
+-   `link.functions`: `list` of copula transformation functions in the format described in previous sections.
+-   `coef.t.`, `delta.t.`, `N.max.`: parameters of the temporal binning. The binning strategy is described in Appendix B of the paper [Approximation of Bayesian Hawkes process with `inlabru`](https://onlinelibrary.wiley.com/doi/full/10.1002/env.2798). The parameters corresponds to `coef.t.`$=\delta$, `delta.t.`$=\Delta$, and `N.max.`$=n_{\max}$.
+-   `bru.opt`: `list` of `inlabru` options as described in the previous Section.
 
 ```{r, message=FALSE}
 synth.fit <- Temporal.ETAS(
@@ -209,7 +210,6 @@ synth.fit <- Temporal.ETAS(
   bru.opt = bru.opt.list
 )
 ```
-
 
 # Check marginal posterior distributions
 
@@ -246,10 +246,10 @@ post.list$post.plot +
 
 The function `post_sampling` generate samples from the joint posterior of ETAS parameters. The function takes in input:
 
-* `input.list`: a list with a `model.fit` element and a `link.functions` elements as described above.
-* `n.samp`: number of posterior samples.
-* `max.batch`: the number of posterior samples to be generated simultaneously. If `n.samp`$>$`max.batch`, then, the samples are generated in parallel in batches of maximum size equal to `max.batch`. Default is $1000$.
-* `ncore`: number of cores to be used in parallel when `n.samp`$>$`max.batch`.
+-   `input.list`: a list with a `model.fit` element and a `link.functions` elements as described above.
+-   `n.samp`: number of posterior samples.
+-   `max.batch`: the number of posterior samples to be generated simultaneously. If `n.samp`$>$`max.batch`, then, the samples are generated in parallel in batches of maximum size equal to `max.batch`. Default is $1000$.
+-   `ncore`: number of cores to be used in parallel when `n.samp`$>$`max.batch`.
 
 The function returns a `data.frame` with columns corresponding to the ETAS parameters
 
@@ -275,14 +275,14 @@ $$
 g(t - t_h, m_h) = K\exp\{\alpha(m_h - M_0)\}\left(\frac{t - t_h}{c} + 1\right)^{-p}
 $$
 
-The function takes in input 
+The function takes in input
 
-* `input.list`: the input list as defined for the functions used previously.
-* `post.samp`: a `data.frame` of samples from the posterior distribution of the parameters. If it is `NULL`, then `n.samp` samples are generated from the posterior.
-* `n.samp`: number of posterior samples of the parameters to be used or generated.
-* `magnitude`: the magnitude of the event ($m_h$).
-* `t.end`: the maximum value of $t$ for the plot.
-* `n.breaks`: the number of breaks in which the interval $(0, \texttt{t.end})$ is divided.
+-   `input.list`: the input list as defined for the functions used previously.
+-   `post.samp`: a `data.frame` of samples from the posterior distribution of the parameters. If it is `NULL`, then `n.samp` samples are generated from the posterior.
+-   `n.samp`: number of posterior samples of the parameters to be used or generated.
+-   `magnitude`: the magnitude of the event ($m_h$).
+-   `t.end`: the maximum value of $t$ for the plot.
+-   `n.breaks`: the number of breaks in which the interval $(0, \texttt{t.end})$ is divided.
 
 The function returns a `ggplot` object. For each sample of the parameters the triggering function between $0$ and `t.end` is calculated. The black solid lines represents the $95\%$ posterior interval of the function, the grey lines represent the triggering function calculated with the posterior samples, and the horizontal red lines represent the $95\%$ posterior interval of the background rate $\mu$. The function `triggering_plot_prior` does the same but using parameters sampled from the priors of the parameters.
 
@@ -315,12 +315,11 @@ trig.plot +
   )
 ```
 
-The functions `omori_plot_posterior` does the same as the function `triggering_fun_plot` but considering only 
+The functions `omori_plot_posterior` does the same as the function `triggering_fun_plot` but considering only
 
 $$
 \left(\frac{t- t_h}{c} + 1\right)^{-p}
-$$
-instead of the whole triggering function and without the background rate.
+$$ instead of the whole triggering function and without the background rate.
 
 ```{r}
 omori.plot <- omori_plot_posterior(input.list = input_list, post.samp = post.samp, n.samp = NULL, t.end = 5)
@@ -334,7 +333,6 @@ omori.plot +
     mapping = aes(x = ts, y = omori.fun), color = "blue"
   )
 ```
-
 
 # Comparison between different fitted models
 
@@ -405,7 +403,7 @@ synth.fit.2 <- Temporal.ETAS(
 )
 ```
 
-Now, to extract the marginal posterior distributions, we need to create the `input_list` of the second model fit. 
+Now, to extract the marginal posterior distributions, we need to create the `input_list` of the second model fit.
 
 ```{r}
 input_list.2 <- list(
@@ -440,8 +438,3 @@ ggplot(bind.post.df, aes(x = x, y = y, color = cat.used)) +
 ```
 
 The process shown here can be extended to multiple ($>2$) input catalogues in order to study if the parameters are identifiable. Also, using characteristics of the input catalogue as catalogue identifier we can study the change in the posterior distribution as the characteristic of the input catalogue changes. An interesting example is the number of events in the catalogue, and studying how the marginal posterior distributions change as we increase or decrease the number of events.
-
-
-
-
-
