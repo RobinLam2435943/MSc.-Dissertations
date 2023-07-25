@@ -41,10 +41,15 @@ library(ETAS.inlabru)
 
 library(dplyr)
 
-# Increase num.threads if you have more cores on your computer
-INLA::inla.setOption(num.threads = 2)
+# Increase/decrease num.cores if you have more/fewer cores on your computer.
+# future::multisession works on both Windows, MacOS, and Linux
+num.cores <- 2
+future::plan(future::multisession, workers = num.cores)
+INLA::inla.setOption(num.threads = num.cores)
+# To deactivate parallelism, run
+#   future::plan(future::sequential)
+#   INLA::inla.setOption(num.threads = 1)
 ```
-
 
 ## Define the parameters for the synthetic catalogues and starting values for inversion
 
@@ -106,6 +111,7 @@ M6p7.ETAS.cat <- M6p7.ETAS.cat[order(M6p7.ETAS.cat$ts), ]
 ```
 
 In this vignette we use Rmd caching, but you can save the catalogues in files explicitly:
+
 ```{r}
 # save(M6p7.ETAS.cat,file="M6p7_ETAS_cat.Rda")
 # save(quiet.ETAS.cat,file="quiet.ETAS.cat.Rda")
@@ -116,6 +122,7 @@ In this vignette we use Rmd caching, but you can save the catalogues in files ex
 ## Load the catalogues
 
 To read from saved object files:
+
 ```{r}
 # load("M6p7_ETAS_cat.Rda")
 # load("quiet.ETAS.cat.Rda")
@@ -285,14 +292,14 @@ for (i in seq_len(nRealisations)) {
   # Define options for inlabru
   if (is.null(list.input$max_step)) {
     list.input$bru.opt.list <- list(
-      bru_verbose = 3, # type of visual output
+      bru_verbose = 4, # type of visual output
       bru_max_iter = list.input$max_iter, # maximum number of iterations
       # bru_method = list(max_step = 0.5),
       bru_initial = list.input$th.init
     ) # parameters initial values
   } else {
     list.input$bru.opt.list <- list(
-      bru_verbose = 3, # type of visual output
+      bru_verbose = 4, # type of visual output
       bru_max_iter = list.input$max_iter, # maximum number of iterations
       bru_method = list(max_step = list.input$max_step),
       bru_initial = list.input$th.init
@@ -464,30 +471,30 @@ plt
 
 ## Plot the samples from the joint posteriors as pairs plots
 
-
 ```{r message=FALSE}
 post_pairs_plot(list.output.quietScenario[[1]], n.samp = 1000)$pair.plot
 ```
+
 ```{r}
 post_pairs_plot(list.output.M6p7Scenario[[1]], n.samp = 1000)$pair_plot
 ```
 
 ## inlabru convergence diagnostics
 
-We can also assess the convergence of the inlabru method itself, using the `bru_convergence_plot()`
-function. This can reveal if the starting values for the inlabru estimation are unreasonable, and better
-starting values for the nonlinear iterations might speed up the computations.
+We can also assess the convergence of the inlabru method itself, using the `bru_convergence_plot()` function. This can reveal if the starting values for the inlabru estimation are unreasonable, and better starting values for the nonlinear iterations might speed up the computations.
 
 ```{r warning=FALSE}
 bru_convergence_plot(list.output.quietScenario[[1]]$model.fit)
 ```
+
 ```{r warning=FALSE}
 bru_convergence_plot(list.output.quietScenario[[2]]$model.fit)
 ```
+
 ```{r warning=FALSE}
 bru_convergence_plot(list.output.M6p7Scenario[[1]]$model.fit)
 ```
+
 ```{r warning=FALSE}
 bru_convergence_plot(list.output.M6p7Scenario[[2]]$model.fit)
 ```
-

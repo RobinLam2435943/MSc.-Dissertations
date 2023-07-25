@@ -63,7 +63,14 @@ require(ggspatial)
 require(rnaturalearthdata)
 require(lubridate)
 
-INLA::inla.setOption(num.threads = 2)
+# Increase/decrease num.cores if you have more/fewer cores on your computer.
+# future::multisession works on both Windows, MacOS, and Linux
+num.cores <- 8
+future::plan(future::multisession, workers = num.cores)
+INLA::inla.setOption(num.threads = num.cores)
+# To deactivate parallelism, run
+#   future::plan(future::sequential)
+#   INLA::inla.setOption(num.threads = 1)
 ```
 
 Copula transformation of the priors
@@ -285,19 +292,88 @@ beta.p <- 1 / (mean(aquila.bru$magnitudes) - M0)
 ```
 
 ```{r}
-synth.cat.list <- generate_temporal_ETAS_synthetic(
-  theta = post.samp[1, ], # ETAS parameters
+set.seed(2)
+n.cat <- 8
+# generate catalogues as list of lists
+multi.synth.cat.list <- lapply(seq_len(n.cat), \(x)
+generate_temporal_ETAS_synthetic(
+  theta = post.samp[x, ],
+  beta.p = beta.p,
+  M0 = M0,
+  T1 = T1,
+  T2 = T2,
+  Ht = aquila.bru[which.max(aquila.bru$magnitudes), ]
+))
+
+# store catalogues as list of data.frames
+multi.synth.cat.list.df <- lapply(multi.synth.cat.list, \(x) do.call(rbind, x))
+# set catalogue identifier
+multi.synth.cat.list.df <- lapply(seq_len(n.cat), \(x) cbind(multi.synth.cat.list.df[[x]],
+  cat.idx = x
+))
+# merge catalogues in unique data.frame
+multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
+
+# we need to bing the synthetics with the observed catalogue for plotting
+cat.df.for.plotting <- rbind(
+  multi.synth.cat.df,
+  cbind(aquila.bru[, c("ts", "magnitudes")],
+    gen = NA,
+    cat.idx = "observed"
+  )
+)
+
+# plot them
+ggplot(cat.df.for.plotting, aes(ts, magnitudes)) +
+  geom_point(size = 0.5) +
+  geom_point(
+    data = aquila.bru[which.max(aquila.bru$magnitudes), ],
+    mapping = aes(ts, magnitudes),
+    color = "red"
+  ) +
+  facet_wrap(facets = ~cat.idx)
+```
+
+Forecasting
+
+```{r}
+# express 1 minute in days
+min.in.days <- 1 / (24 * 60)
+# find time of the event with the greatest magnitude
+t.max.mag <- aquila.bru$ts[which.max(aquila.bru$magnitudes)]
+# set starting time of the forecasting period
+T1.fore <- t.max.mag + min.in.days
+# set forecast length
+fore.length <- 1
+# set end time of the forecasting period
+T2.fore <- T1.fore + fore.length
+# set known data
+Ht.fore <- aquila.bru[aquila.bru$ts < T1.fore, ]
+
+# produce forecast
+daily.fore <- Temporal.ETAS.forecast(
+  post.samp = post.samp, # ETAS parameters posterior samples
+  n.cat = nrow(post.samp), # number of synthetic catalogues
   beta.p = beta.p, # magnitude distribution parameter
   M0 = M0, # cutoff magnitude
-  T1 = T1, # starting time
-  T2 = T2, # end time
-  Ht = aquila.bru[which.max(aquila.bru$magnitudes), ] # known events
-)
-# merge into unique data.frame
-synth.cat.df <- do.call(rbind, synth.cat.list)
-# order events by time
-synth.cat.df <- synth.cat.df[order(synth.cat.df$ts), ]
+  T1 = T1.fore, # forecast starting time
+  T2 = T2.fore, # forecast end time
+  Ht = Ht.fore, # known events
+  ncore = num.cores
+) # number of cores
+```
 
-ggplot(synth.cat.df, aes(ts, magnitudes, color = as.factor(gen))) +
-  geom_point(size = 0.5)
+```{r, message = FALSE, warning = FALSE}
+# find number of events per catalogue
+N.fore <- vapply(
+  seq_len(daily.fore$n.cat),
+  \(x) sum(daily.fore$fore.df$cat.idx == x), 0
+)
+# find number of observed events in the forecasting period
+N.obs <- sum(aquila.bru$ts >= T1.fore & aquila.bru$ts <= T2.fore)
+# plot the distribution
+ggplot() +
+  geom_histogram(aes(x = N.fore, y = after_stat(density)), binwidth = 1) +
+  geom_vline(xintercept = N.obs) +
+  xlim(100, 500)
 ```
