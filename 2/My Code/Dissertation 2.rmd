@@ -398,7 +398,8 @@ ETAS.forecast <- function(){
     N.obs <- sum(envir$data$ts >= T1.fore & envir$data$ts <= T2.fore)
     # plot the distribution
     histfore <- ggplot() +
-      geom_histogram(aes(x = N.fore, y = after_stat(density)), binwidth = 1) +
+      geom_histogram(aes(x = N.fore, y = after_stat(density)), 
+                     binwidth = 1) +
       geom_vline(xintercept = N.obs) +
       xlim(100, 500)
     
