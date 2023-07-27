@@ -287,12 +287,6 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
 etas <- ETAS()
 ```
 
-```{r}
-# ETAS.results <- function(etas = etas){
-#     
-# }
-```
-
 Synthetic catalogues generation
 
 ```{r, message = FALSE, warning = FALSE}
@@ -301,7 +295,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
                      ht = etas$envir$data[which.max(
                          etas$envir$data$magnitudes), ]){
     
-    # inherits the environment in `etas`
+    # inherits the environment of `etas`
     envir <- etas$envir  
     
     # updates environments if specified by users
@@ -352,8 +346,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
     return(tibble::lst(cat.df.for.plotting, multi.synth.cat.plot, 
                        multi.synth.etas))
 }
-mult.synth.fit <- mult.synth.ETAS(t1 = 100, t2 = 200)
-View(mult.synth.fit)
+mult.synth.fit <- mult.synth.ETAS()
 ```
 
 Forecasting
@@ -361,7 +354,7 @@ Forecasting
 ```{r}
 ETAS.forecast <- function(){
     
-    # inherits the environment in `etas`
+    # inherits the environment of `etas`
     envir <- etas$envir  
     
     # express 1 minute in days
@@ -405,5 +398,9 @@ ETAS.forecast <- function(){
     
     return(histfore)
 }
-ETAS.forecast()
+histfore <- ETAS.forecast()
+```
+
+```{r}
+save.image()
 ```
