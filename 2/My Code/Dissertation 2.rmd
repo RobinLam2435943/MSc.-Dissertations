@@ -402,5 +402,5 @@ histfore <- ETAS.forecast()
 ```
 
 ```{r}
-save.image()
+# save.image()
 ```
