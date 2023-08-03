@@ -197,9 +197,9 @@ bru.opt.list <- list(
 
 ```{r, message = FALSE, warning = FALSE}
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
-                 ncore = num.cores, link.f = link.f,
+                 ncore = num.cores, Link.f = link.f,
                  n.samp = 1000, max.batch = 1000,
-                 mag = 5, n.breaks = 100, t.end.tri.post = 5, 
+                 mag = 4, n.breaks = 100, t.end.tri.post = 5, 
                  t.end.tri.prior = 10, t.end.omori.post = 5,
                  t.end.omori.prior = 5){
     
@@ -212,7 +212,7 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       M0 = m0,
       T1 = t1,
       T2 = t2,
-      link.functions = link.f,
+      link.functions = Link.f,
       coef.t. = 1,
       delta.t. = 0.1,
       N.max. = 5,
@@ -222,7 +222,7 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
     # create input list to explore model output
     input_list <- list(
       model.fit = model.fit,
-      link.functions = link.f
+      link.functions = Link.f
     )
     
     # get marginal posterior information
@@ -467,17 +467,7 @@ mult.synth.fit <- synth.fit()
 ```
 
 ```{r}
-# # plot them
-# ggplot(mult.synth.fit$environ$bind.post.N.df,
-#                       aes(x = N, y = mean, color = 
-#                         Catalogues)) +
-#    geom_line() +
-#    xlab("N") +
-#    ylab("pdf") +
-#    geom_vline(
-#      data = mult.synth.fit$environ$df.true.N,
-#      mapping = aes(xintercept = N), linetype = 2
-#    )
+
 ```
 
 Forecasting
