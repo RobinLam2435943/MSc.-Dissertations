@@ -363,7 +363,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
     return(tibble::lst(environ))
 }
 mult.synth <- mult.synth.ETAS(ht = NULL)
-
+# profvis::profvis({mult.synth <- mult.synth.ETAS(ht = NULL)})
 Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
     mult.synth$environ$multi.synth.cat.list.df[[i]])))
 ```
@@ -493,5 +493,5 @@ fore <- ETAS.forecast()
 ```
 
 ```{r}
-save.image(file = 'Robin.RData')
+# save.image(file = 'Robin.RData')
 ```
