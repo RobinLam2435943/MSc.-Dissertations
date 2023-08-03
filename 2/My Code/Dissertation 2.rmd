@@ -197,7 +197,8 @@ bru.opt.list <- list(
 
 ```{r, message = FALSE, warning = FALSE}
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
-                 ncore = num.cores, n.samp = 1000, max.batch = 1000,
+                 ncore = num.cores, link.f = link.f,
+                 n.samp = 1000, max.batch = 1000,
                  mag = 5, n.breaks = 100, t.end.tri.post = 5, 
                  t.end.tri.prior = 10, t.end.omori.post = 5,
                  t.end.omori.prior = 5){
@@ -368,64 +369,115 @@ mult.synth <- mult.synth.ETAS(ht = NULL)
 ```
 
 ```{r, message = FALSE, warning = FALSE}
-Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
-    mult.synth$environ$multi.synth.cat.list.df[[i]])))
-classes <- cut(Nevents, breaks = c(0, 125, 150, 200, 400, 1600))
-samp.each.class <- 1
-samp.id <- rep(0, samp.each.class * length(levels(classes)))
-for(i in 1 : length(levels(classes))){
-    samp.id[(samp.each.class * (i - 1) + 1) : (samp.each.class * i)] <- 
-        sample(which(classes == levels(classes)[i]), samp.each.class)
+synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
+                      samp.each.class = 1){
+    Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
+        mult.synth$environ$multi.synth.cat.list.df[[i]])))
+    classes <- cut(Nevents, breaks = breaks)
+    samp.id <- rep(0, samp.each.class * length(levels(classes)))
+    for(i in 1 : length(levels(classes))){
+        samp.id[(samp.each.class * (i - 1) + 1) : (samp.each.class * i)] <- 
+            sample(which(classes == levels(classes)[i]), samp.each.class)
+    }
+    
+    input <- vector(mode = 'list', length(levels(classes)))
+    post <- vector(mode = 'list', length(levels(classes)))
+    post.par <- matrix(rep(0, length(levels(classes)) * 5), ncol = 5)
+    Npost <- vector(mode = 'list', length(levels(classes)))
+    Npostmean <- rep(0, length(levels(classes)))
+    Nlarge <- rep(0, length(levels(classes)))
+    abs_dist_int <- rep(0, length(levels(classes)))
+    abs_dist_mag <- rep(0, length(levels(classes)))
+    overdisp <- rep(0, length(levels(classes)))
+    
+    for(i in 1 : length(levels(classes))){
+        j <- samp.id[i]
+        multi.synth.etas <- ETAS(data = 
+                        mult.synth$environ$multi.synth.cat.list.df[[j]],
+                                    t1 = mult.synth$environ$envir$t1, 
+                                    t2 = mult.synth$environ$envir$t2)
+        post[[i]] <- multi.synth.etas$envir$post.list
+        post.par[i,] <- multi.synth.etas$envir$post.par
+        Npost[[i]] <- multi.synth.etas$envir$N.post
+        Npostmean[i] <- multi.synth.etas$envir$Npostmean
+        Nlarge[i] <- multi.synth.etas$envir$Nlarge
+        abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
+        abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
+        overdisp[i] <- multi.synth.etas$envir$overdisp
+    }
+    
+    post[[1]]$post.df$Catalogues <- 
+        'Random Catalogue 1: Less than 125 Events'
+    post[[2]]$post.df$Catalogues <- 'Random Catalogue 2: 125 to 150 Events'
+    post[[3]]$post.df$Catalogues <- 'Random Catalogue 3: 150 to 200 Events'
+    post[[4]]$post.df$Catalogues <- 'Random Catalogue 4: 200 to 400 Events'
+    post[[5]]$post.df$Catalogues <- 'Random Catalogue 5: 400 to 1600 Events'
+    
+    df.true.param <- data.frame(x = etas$envir$post.par, 
+                        param = names(etas$envir$post.par %>% as.list))
+    
+    # bind marginal posterior data.frames
+    bind.post.df <- rbind(post[[1]]$post.df, post[[2]]$post.df, 
+                          post[[3]]$post.df, post[[4]]$post.df, 
+                          post[[5]]$post.df)
+    
+    # plot them
+    post.par.plot <- ggplot(bind.post.df, 
+                            aes(x = x, y = y, color = Catalogues)) +
+      geom_line() +
+      facet_wrap(facets = ~param, scales = "free") +
+      xlab("param") +
+      ylab("pdf") +
+      geom_vline(
+        data = df.true.param,
+        mapping = aes(xintercept = x), linetype = 2
+      )
+    
+    ##
+    Npost[[1]]$post.df$Catalogues <- 
+        'Random Catalogue 1: Less than 125 Events'
+    Npost[[2]]$post.df$Catalogues <- 'Random Catalogue 2: 125 to 150 Events'
+    Npost[[3]]$post.df$Catalogues <- 'Random Catalogue 3: 150 to 200 Events'
+    Npost[[4]]$post.df$Catalogues <- 'Random Catalogue 4: 200 to 400 Events'
+    Npost[[5]]$post.df$Catalogues <- 'Random Catalogue 5: 400 to 1600 Events'
+    
+    df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
+    
+    # bind marginal posterior data.frames
+    bind.post.N.df <- rbind(Npost[[1]]$post.df, Npost[[2]]$post.df, 
+                          Npost[[3]]$post.df, Npost[[4]]$post.df, 
+                          Npost[[5]]$post.df)
+    
+    # plot them
+    post.N.plot <- ggplot(bind.post.N.df,
+                          aes(x = N, y = mean, color = Catalogues)) +
+      geom_line() +
+      xlab("N") +
+      ylab("pdf") +
+      geom_vline(
+        data = df.true.N,
+        mapping = aes(xintercept = N), linetype = 2
+      )
+    
+    # returns the whole environment
+    environ <- as.list(environment())
+    return(tibble::lst(environ))
 }
+mult.synth.fit <- synth.fit()
+```
 
-input <- vector(mode = 'list', length(levels(classes)))
-post <- vector(mode = 'list', length(levels(classes)))
-post.par <- matrix(rep(0, length(levels(classes)) * 5), ncol = 5)
-Npostmean <- rep(0, length(levels(classes)))
-Nlarge <- rep(0, length(levels(classes)))
-abs_dist_int <- rep(0, length(levels(classes)))
-abs_dist_mag <- rep(0, length(levels(classes)))
-overdisp <- rep(0, length(levels(classes)))
-
-for(i in 1 : length(levels(classes))){
-    j <- samp.id[i]
-    multi.synth.etas <- ETAS(data = 
-                             mult.synth$environ$multi.synth.cat.list.df[[j]],
-                                t1 = mult.synth$environ$envir$t1, 
-                                t2 = mult.synth$environ$envir$t2)
-    post[[i]] <- multi.synth.etas$envir$post.list
-    post.par[i,] <- multi.synth.etas$envir$post.par
-    Npostmean[i] <- multi.synth.etas$envir$Npostmean
-    Nlarge[i] <- multi.synth.etas$envir$Nlarge
-    abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
-    abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
-    overdisp[i] <- multi.synth.etas$envir$overdisp
-}
-
-post[[1]]$post.df$Catalogues <- 'Random Catalogue 1: Less than 125 Events'
-post[[2]]$post.df$Catalogues <- 'Random Catalogue 2: 125 to 150 Events'
-post[[3]]$post.df$Catalogues <- 'Random Catalogue 3: 150 to 200 Events'
-post[[4]]$post.df$Catalogues <- 'Random Catalogue 4: 200 to 400 Events'
-post[[5]]$post.df$Catalogues <- 'Random Catalogue 5: 400 to 1600 Events'
-
-df.true.param <- data.frame(x = etas$envir$post.par, 
-                            param = names(etas$envir$post.par %>% as.list))
-
-# bind marginal posterior data.frames
-bind.post.df <- rbind(post[[1]]$post.df, post[[2]]$post.df, 
-                      post[[3]]$post.df, post[[4]]$post.df, 
-                      post[[5]]$post.df)
-
-# plot them
-ggplot(bind.post.df, aes(x = x, y = y, color = Catalogues)) +
-  geom_line() +
-  facet_wrap(facets = ~param, scales = "free") +
-  xlab("param") +
-  ylab("pdf") +
-  geom_vline(
-    data = df.true.param,
-    mapping = aes(xintercept = x), linetype = 2
-  )
+```{r}
+# # plot them
+# ggplot(mult.synth.fit$environ$bind.post.N.df,
+#                       aes(x = N, y = mean, color = 
+#                         Catalogues)) +
+#    geom_line() +
+#    xlab("N") +
+#    ylab("pdf") +
+#    geom_vline(
+#      data = mult.synth.fit$environ$df.true.N,
+#      mapping = aes(xintercept = N), linetype = 2
+#    )
 ```
 
 Forecasting
@@ -481,5 +533,5 @@ fore <- ETAS.forecast()
 ```
 
 ```{r}
-# save.image(file = 'Robin.RData')
+# save.image(file = 'Robin_new.RData')
 ```
