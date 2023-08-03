@@ -65,7 +65,7 @@ require(lubridate)
 
 # Increase/decrease num.cores if you have more/fewer cores on your computer.
 # future::multisession works on both Windows, MacOS, and Linux
-num.cores <- 8
+num.cores <- 10
 future::plan(future::multisession, workers = num.cores)
 INLA::inla.setOption(num.threads = num.cores)
 # To deactivate parallelism, run
@@ -198,7 +198,7 @@ bru.opt.list <- list(
 ```{r, message = FALSE, warning = FALSE}
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
                  ncore = num.cores, n.samp = 1000, max.batch = 1000,
-                 mag = 4, n.breaks = 100, t.end.tri.post = 5, 
+                 mag = 5, n.breaks = 100, t.end.tri.post = 5, 
                  t.end.tri.prior = 10, t.end.omori.post = 5,
                  t.end.omori.prior = 5){
     
@@ -238,6 +238,9 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       ncore = num.cores
     )
     
+    # taking the averages of the posterior parameter estimates
+    post.par <- apply(post.samp, 2, mean)
+    
     # pair plot
     pair.plot <- post_pairs_plot(
       post.samp = post.samp,
@@ -255,6 +258,24 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
     # posterior number of events
     N.post <- get_posterior_N(input.list = input_list)
     Npostplot <- N.post$post.plot
+    Npostmean <- N.post$post.df[which.max(N.post$post.df$mean), 1] 
+    
+    # number of large events
+    large_events <- data[data$magnitudes >= mag,]
+    Nlarge <- nrow(large_events)
+    
+    # mean absolute distance of the differences in magnitudes
+    diff_mag <- diff(data$magnitudes)
+    abs_dist_mag <- mean(abs(diff_mag))
+    
+    # mean absolute distance of the inter-arrival time 
+    interarrival <- diff(data$ts)
+    abs_dist_int <- mean(abs(interarrival))
+    
+    # check if overdispersion occurs
+    m_int_time <- mean(interarrival)
+    v_int_time <- var(interarrival)
+    overdisp <- m_int_time ^ 2 < v_int_time
     
     # triggering function plots
     # posterior
@@ -290,12 +311,11 @@ etas <- ETAS()
 Synthetic catalogues generation
 
 ```{r, message = FALSE, warning = FALSE}
-set.seed(2)
-mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
+mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
                      ht = etas$envir$data[which.max(
                          etas$envir$data$magnitudes), ]){
     
-    # inherits the environment of `etas`
+    # inherits the environment from function `ETAS`
     envir <- etas$envir  
     
     # updates environments if specified by users
@@ -304,10 +324,11 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
     
     # generate catalogues as list of lists
     multi.synth.cat.list <- lapply(seq_len(n.cat), \(x)
-    generate_temporal_ETAS_synthetic(
-      theta = envir$post.samp[x, ], beta.p = envir$beta.p, 
-      M0 = envir$m0, T1 = envir$t1,
-      T2 = envir$t2, Ht = ht, ncore = envir$ncore))
+        generate_temporal_ETAS_synthetic(
+          theta = envir$post.samp[x, ],
+          beta.p = envir$beta.p, 
+          M0 = envir$m0, T1 = envir$t1,
+          T2 = envir$t2, Ht = ht, ncore = num.cores))
     
     # store catalogues as list of data.frames
     multi.synth.cat.list.df <- lapply(multi.synth.cat.list,
@@ -319,7 +340,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
                                             cat.idx = x))
     # merge catalogues in unique data.frame
     multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
-    
+
     # we need to bing the synthetics with the observed catalogue for plotting
     cat.df.for.plotting <- rbind(
       multi.synth.cat.df,
@@ -327,9 +348,9 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
         gen = NA, cat.idx = "observed"
       )
     )
-    
+
     # plot them
-    multi.synth.cat.plot <- ggplot(cat.df.for.plotting, 
+    multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
                                    aes(ts, magnitudes)) +
       geom_point(size = 0.5) +
       geom_point(
@@ -337,16 +358,86 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1,
       ) +
       facet_wrap(facets = ~cat.idx)
     
-    # modelling
-    multi.synth.etas <- ETAS(data = multi.synth.cat.df, 
-                             t1 = envir$t1, t2 = envir$t2)
-
-    # returns the synthetic dataset with plots, as well as the modelling 
-    # results
-    return(tibble::lst(cat.df.for.plotting, multi.synth.cat.plot, 
-                       multi.synth.etas))
+    # returns the whole environment
+    environ <- as.list(environment())
+    return(tibble::lst(environ))
 }
-mult.synth.fit <- mult.synth.ETAS()
+mult.synth <- mult.synth.ETAS(ht = NULL)
+
+Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
+    mult.synth$environ$multi.synth.cat.list.df[[i]])))
+```
+
+```{r}
+# synth.ETAS <- function(t1 = NULL, t2 = NULL, envir = etas$envir,
+#                      ht = etas$envir$data[which.max(
+#                          etas$envir$data$magnitudes), ]){
+#     
+#     # updates environments if specified by users
+#     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
+#     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
+#     
+#     # generates a single catalogue as a list
+#     synth.cat.list <- generate_temporal_ETAS_synthetic(
+#           theta = envir$post.samp[1, ],
+#           beta.p = envir$beta.p, 
+#           M0 = envir$m0, T1 = envir$t1,
+#           T2 = envir$t2, Ht = ht, ncore = num.cores)
+#     
+#     # merges into unique data frame
+#     synth.cat.df <- do.call(rbind, synth.cat.list)
+#     
+#     # orders events by time
+#     synth.cat.df <- synth.cat.df[order(synth.cat.df$ts), ]
+#     
+#     # returns the synthetic catalogue
+#     return(synth.cat.df)
+# }
+# 
+# for(i in 1 : 10){
+#     test <- synth.ETAS(ht = NULL)
+# }
+
+```
+
+```{r}
+# # modelling
+#     post.par <- matrix(rep(0, n.cat * 5), ncol = 5)
+#     Npostmean <- rep(0, n.cat)
+#     Nlarge <- rep(0, n.cat)
+#     abs_dist_int <- rep(0, n.cat) 
+#     abs_dist_mag <- rep(0, n.cat)
+#     overdisp <- rep(0, n.cat)
+#     j <- rep(0, n.cat)
+# 
+#     i <- 1
+#     while(i <= n.cat){
+#         Nevents <- nrow(multi.synth.cat.df[
+#             multi.synth.cat.df$cat.idx == i,])
+#         if(Nevents >= events_threshold){
+#             multi.synth.etas <- ETAS(data = multi.synth.cat.df[
+#             multi.synth.cat.df$cat.idx == i,],
+#                              t1 = envir$t1, t2 = envir$t2)
+#             post.par[i,] <- multi.synth.etas$envir$post.par
+#             Npostmean[i] <- multi.synth.etas$envir$Npostmean
+#             Nlarge[i] <- multi.synth.etas$envir$Nlarge
+#             abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
+#             abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
+#             overdisp[i] <- multi.synth.etas$envir$overdisp
+#         }else{
+#             j[i] <- 1 
+#         }
+#         i <- i + 1
+#     }
+#     
+#     # remove the elements not evaluated
+#     k <- which(j == 1)
+#     post.par <- post.par[-k,]
+#     Npostmean <- Npostmean[-k]
+#     Nlarge <- Nlarge[-k]
+#     abs_dist_int <- abs_dist_int[-k]
+#     abs_dist_mag <- abs_dist_mag[-k]
+#     overdisp <- overdisp[-k]
 ```
 
 Forecasting
@@ -354,7 +445,7 @@ Forecasting
 ```{r}
 ETAS.forecast <- function(){
     
-    # inherits the environment of `etas`
+    # inherits the environment from function `ETAS`
     envir <- etas$envir  
     
     # express 1 minute in days
@@ -379,7 +470,7 @@ ETAS.forecast <- function(){
       T1 = T1.fore, # forecast starting time
       T2 = T2.fore, # forecast end time
       Ht = Ht.fore, # known events
-      ncore = envir$ncore # number of cores
+      ncore = num.cores # number of cores
     )
     
     # find number of events per catalogue
@@ -396,11 +487,11 @@ ETAS.forecast <- function(){
       geom_vline(xintercept = N.obs) +
       xlim(100, 500)
     
-    return(histfore)
+    return(tibble::lst(N.fore, N.obs, histfore))
 }
-histfore <- ETAS.forecast()
+fore <- ETAS.forecast()
 ```
 
 ```{r}
-# save.image()
+save.image(file = 'Robin.RData')
 ```
