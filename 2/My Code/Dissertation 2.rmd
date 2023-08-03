@@ -310,6 +310,19 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
 etas <- ETAS()
 ```
 
+Effect of mis-specifying parameters
+
+```{r}
+# # set copula transformations list
+# link.f1 <- list(
+#   mu = \(x) gamma_t(x, 0.3, 0.6),
+#   K = \(x) unif_t(x, 0, 10),
+#   alpha = \(x) unif_t(x, 0, 10),
+#   c_ = \(x) unif_t(x, 0, 10),
+#   p = \(x) unif_t(x, 1, 10)
+# )
+```
+
 Synthetic catalogues generation
 
 ```{r, message = FALSE, warning = FALSE}
@@ -324,7 +337,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
     
-    # generate catalogues as list of lists
+    # generates catalogues as list of lists
     multi.synth.cat.list <- lapply(seq_len(n.cat), \(x)
         generate_temporal_ETAS_synthetic(
           theta = envir$post.samp[x, ],
@@ -332,33 +345,23 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
           M0 = envir$m0, T1 = envir$t1,
           T2 = envir$t2, Ht = ht, ncore = num.cores))
     
-    # store catalogues as list of data.frames
+    # stores catalogues as list of data.frames
     multi.synth.cat.list.df <- lapply(multi.synth.cat.list,
                                       \(x) do.call(rbind, x))
-    # set catalogue identifier
+    
+    # calculates the number of events in each catalogue
+    Nevents <- unlist(lapply(1 : n.cat, \(i) nrow(
+        multi.synth.cat.list.df[[i]])))
+    
+    # sets catalogue identifier
     multi.synth.cat.list.df <- lapply(seq_len(n.cat),
                                       \(x) cbind(
                                           multi.synth.cat.list.df[[x]],
-                                            cat.idx = x))
-    # merge catalogues in unique data.frame
+                                            cat.idx = x, 
+                                          num_events = Nevents[x]))
+    
+    # merges catalogues in unique data.frame
     multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
-
-    # we need to bing the synthetics with the observed catalogue for plotting
-    cat.df.for.plotting <- rbind(
-      multi.synth.cat.df,
-      cbind(envir$data[, c("ts", "magnitudes")],
-        gen = NA, cat.idx = "observed"
-      )
-    )
-
-    # plot them
-    multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
-                                   aes(ts, magnitudes)) +
-      geom_point(size = 0.5) +
-      geom_point(
-        data = ht, mapping = aes(ts, magnitudes), color = "red"
-      ) +
-      facet_wrap(facets = ~cat.idx)
     
     # returns the whole environment
     environ <- as.list(environment())
@@ -371,8 +374,9 @@ mult.synth <- mult.synth.ETAS(ht = NULL)
 ```{r, message = FALSE, warning = FALSE}
 synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
                       samp.each.class = 1){
-    Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
-        mult.synth$environ$multi.synth.cat.list.df[[i]])))
+    
+    # selecting catalogues
+    Nevents <- mult.synth$environ$Nevents
     classes <- cut(Nevents, breaks = breaks)
     samp.id <- rep(0, samp.each.class * length(levels(classes)))
     for(i in 1 : length(levels(classes))){
@@ -380,6 +384,29 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
             sample(which(classes == levels(classes)[i]), samp.each.class)
     }
     
+    # we need to bing the synthetics with the observed catalogue 
+    # for plotting
+    cat.df.for.plotting <- rbind(
+      mult.synth$environ$multi.synth.cat.df[
+        which(
+          mult.synth$environ$multi.synth.cat.df$cat.idx %in% samp.id), ],
+      cbind(mult.synth$environ$envir$data[, c("ts", "magnitudes")],
+        gen = NA, cat.idx = "observed", num_events = nrow(etas$envir$data)
+      )
+    )
+
+    # plot them
+    multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
+                                   aes(ts, magnitudes)) +
+      geom_point(size = 0.5) +
+      geom_point(
+        data = mult.synth$environ$ht, 
+        mapping = aes(ts, magnitudes), color = "black"
+      ) +
+      facet_wrap(facets = vars(cat.idx, num_events), 
+                 labeller = 'label_both')
+    
+    # modelling
     input <- vector(mode = 'list', length(levels(classes)))
     post <- vector(mode = 'list', length(levels(classes)))
     post.par <- matrix(rep(0, length(levels(classes)) * 5), ncol = 5)
@@ -425,7 +452,7 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
     post.par.plot <- ggplot(bind.post.df, 
                             aes(x = x, y = y, color = Catalogues)) +
       geom_line() +
-      facet_wrap(facets = ~param, scales = "free") +
+      facet_wrap(facets = ~ param, scales = "free") +
       xlab("param") +
       ylab("pdf") +
       geom_vline(
@@ -439,7 +466,8 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
     Npost[[2]]$post.df$Catalogues <- 'Random Catalogue 2: 125 to 150 Events'
     Npost[[3]]$post.df$Catalogues <- 'Random Catalogue 3: 150 to 200 Events'
     Npost[[4]]$post.df$Catalogues <- 'Random Catalogue 4: 200 to 400 Events'
-    Npost[[5]]$post.df$Catalogues <- 'Random Catalogue 5: 400 to 1600 Events'
+    Npost[[5]]$post.df$Catalogues <- 
+        'Random Catalogue 5: 400 to 1600 Events'
     
     df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
     
@@ -464,10 +492,6 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
     return(tibble::lst(environ))
 }
 mult.synth.fit <- synth.fit()
-```
-
-```{r}
-
 ```
 
 Forecasting
