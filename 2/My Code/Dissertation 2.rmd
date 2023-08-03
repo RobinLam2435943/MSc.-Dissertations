@@ -298,8 +298,9 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
                          n.samp = NULL, t.end = t.end.omori.post)
     
     # prior
-    omoriprior <- omori_plot_prior(input.list = input_list, n.samp = n.samp, 
-                     t.end = t.end.omori.prior)
+    omoriprior <- omori_plot_prior(input.list = input_list, 
+                                   n.samp = n.samp, 
+                                    t.end = t.end.omori.prior)
     
     # returns the whole environment
     envir <- as.list(environment())
@@ -364,80 +365,67 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
 }
 mult.synth <- mult.synth.ETAS(ht = NULL)
 # profvis::profvis({mult.synth <- mult.synth.ETAS(ht = NULL)})
+```
+
+```{r, message = FALSE, warning = FALSE}
 Nevents <- unlist(lapply(1 : mult.synth$environ$n.cat, \(i) nrow(
     mult.synth$environ$multi.synth.cat.list.df[[i]])))
-```
+classes <- cut(Nevents, breaks = c(0, 125, 150, 200, 400, 1600))
+samp.each.class <- 1
+samp.id <- rep(0, samp.each.class * length(levels(classes)))
+for(i in 1 : length(levels(classes))){
+    samp.id[(samp.each.class * (i - 1) + 1) : (samp.each.class * i)] <- 
+        sample(which(classes == levels(classes)[i]), samp.each.class)
+}
 
-```{r}
-# synth.ETAS <- function(t1 = NULL, t2 = NULL, envir = etas$envir,
-#                      ht = etas$envir$data[which.max(
-#                          etas$envir$data$magnitudes), ]){
-#     
-#     # updates environments if specified by users
-#     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
-#     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
-#     
-#     # generates a single catalogue as a list
-#     synth.cat.list <- generate_temporal_ETAS_synthetic(
-#           theta = envir$post.samp[1, ],
-#           beta.p = envir$beta.p, 
-#           M0 = envir$m0, T1 = envir$t1,
-#           T2 = envir$t2, Ht = ht, ncore = num.cores)
-#     
-#     # merges into unique data frame
-#     synth.cat.df <- do.call(rbind, synth.cat.list)
-#     
-#     # orders events by time
-#     synth.cat.df <- synth.cat.df[order(synth.cat.df$ts), ]
-#     
-#     # returns the synthetic catalogue
-#     return(synth.cat.df)
-# }
-# 
-# for(i in 1 : 10){
-#     test <- synth.ETAS(ht = NULL)
-# }
+input <- vector(mode = 'list', length(levels(classes)))
+post <- vector(mode = 'list', length(levels(classes)))
+post.par <- matrix(rep(0, length(levels(classes)) * 5), ncol = 5)
+Npostmean <- rep(0, length(levels(classes)))
+Nlarge <- rep(0, length(levels(classes)))
+abs_dist_int <- rep(0, length(levels(classes)))
+abs_dist_mag <- rep(0, length(levels(classes)))
+overdisp <- rep(0, length(levels(classes)))
 
-```
+for(i in 1 : length(levels(classes))){
+    j <- samp.id[i]
+    multi.synth.etas <- ETAS(data = 
+                             mult.synth$environ$multi.synth.cat.list.df[[j]],
+                                t1 = mult.synth$environ$envir$t1, 
+                                t2 = mult.synth$environ$envir$t2)
+    post[[i]] <- multi.synth.etas$envir$post.list
+    post.par[i,] <- multi.synth.etas$envir$post.par
+    Npostmean[i] <- multi.synth.etas$envir$Npostmean
+    Nlarge[i] <- multi.synth.etas$envir$Nlarge
+    abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
+    abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
+    overdisp[i] <- multi.synth.etas$envir$overdisp
+}
 
-```{r}
-# # modelling
-#     post.par <- matrix(rep(0, n.cat * 5), ncol = 5)
-#     Npostmean <- rep(0, n.cat)
-#     Nlarge <- rep(0, n.cat)
-#     abs_dist_int <- rep(0, n.cat) 
-#     abs_dist_mag <- rep(0, n.cat)
-#     overdisp <- rep(0, n.cat)
-#     j <- rep(0, n.cat)
-# 
-#     i <- 1
-#     while(i <= n.cat){
-#         Nevents <- nrow(multi.synth.cat.df[
-#             multi.synth.cat.df$cat.idx == i,])
-#         if(Nevents >= events_threshold){
-#             multi.synth.etas <- ETAS(data = multi.synth.cat.df[
-#             multi.synth.cat.df$cat.idx == i,],
-#                              t1 = envir$t1, t2 = envir$t2)
-#             post.par[i,] <- multi.synth.etas$envir$post.par
-#             Npostmean[i] <- multi.synth.etas$envir$Npostmean
-#             Nlarge[i] <- multi.synth.etas$envir$Nlarge
-#             abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
-#             abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
-#             overdisp[i] <- multi.synth.etas$envir$overdisp
-#         }else{
-#             j[i] <- 1 
-#         }
-#         i <- i + 1
-#     }
-#     
-#     # remove the elements not evaluated
-#     k <- which(j == 1)
-#     post.par <- post.par[-k,]
-#     Npostmean <- Npostmean[-k]
-#     Nlarge <- Nlarge[-k]
-#     abs_dist_int <- abs_dist_int[-k]
-#     abs_dist_mag <- abs_dist_mag[-k]
-#     overdisp <- overdisp[-k]
+post[[1]]$post.df$Catalogues <- 'Random Catalogue 1: Less than 125 Events'
+post[[2]]$post.df$Catalogues <- 'Random Catalogue 2: 125 to 150 Events'
+post[[3]]$post.df$Catalogues <- 'Random Catalogue 3: 150 to 200 Events'
+post[[4]]$post.df$Catalogues <- 'Random Catalogue 4: 200 to 400 Events'
+post[[5]]$post.df$Catalogues <- 'Random Catalogue 5: 400 to 1600 Events'
+
+df.true.param <- data.frame(x = etas$envir$post.par, 
+                            param = names(etas$envir$post.par %>% as.list))
+
+# bind marginal posterior data.frames
+bind.post.df <- rbind(post[[1]]$post.df, post[[2]]$post.df, 
+                      post[[3]]$post.df, post[[4]]$post.df, 
+                      post[[5]]$post.df)
+
+# plot them
+ggplot(bind.post.df, aes(x = x, y = y, color = Catalogues)) +
+  geom_line() +
+  facet_wrap(facets = ~param, scales = "free") +
+  xlab("param") +
+  ylab("pdf") +
+  geom_vline(
+    data = df.true.param,
+    mapping = aes(xintercept = x), linetype = 2
+  )
 ```
 
 Forecasting
