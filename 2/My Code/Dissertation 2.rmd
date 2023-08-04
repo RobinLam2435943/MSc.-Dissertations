@@ -95,6 +95,45 @@ inv.link.f <- list(
 )
 ```
 
+```{r}
+# obtain sample from standard normal distribution
+X <- rnorm(1000)
+# apply copula transformations
+gamma.X <- gamma_t(X, .3, .6)
+unif.X <- unif_t(X, 0, 10)
+exp.X <- exp_t(X, 1)
+loggaus.X <- loggaus_t(X, .5, .5)
+
+# build data.frame for plotting
+df.to.plot <- rbind(
+  data.frame(
+    value = X,
+    distribution = "Std Normal"
+  ),
+  data.frame(
+    value = gamma.X,
+    distribution = "Gamma"
+  ),
+  data.frame(
+    value = unif.X,
+    distribution = "Uniform"
+  ),
+  data.frame(
+    value = exp.X,
+    distribution = "Exponential"
+  ),
+  data.frame(
+    value = loggaus.X,
+    distribution = "Log-Gaussian"
+  )
+)
+# plot them
+ggplot(df.to.plot, aes(value)) +
+  geom_density() +
+  theme_bw() +
+  facet_wrap(facets = ~ distribution, scales = "free")
+```
+
 Italy
 
 ```{r}
@@ -198,10 +237,10 @@ bru.opt.list <- list(
 ```{r, message = FALSE, warning = FALSE}
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
                  ncore = num.cores, Link.f = link.f,
-                 n.samp = 1000, max.batch = 1000,
-                 mag = 4, n.breaks = 100, t.end.tri.post = 5, 
-                 t.end.tri.prior = 10, t.end.omori.post = 5,
-                 t.end.omori.prior = 5){
+                 Bru.opt.list = bru.opt.list, n.samp = 1000, 
+                 max.batch = 1000, mag = 4, n.breaks = 100, 
+                 t.end.tri.post = 5, t.end.tri.prior = 10, 
+                 t.end.omori.post = 5, t.end.omori.prior = 5){
     
     # maximum likelihood estimator for beta
     beta.p <- 1 / (mean(data$magnitudes) - m0)
@@ -216,7 +255,7 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       coef.t. = 1,
       delta.t. = 0.1,
       N.max. = 5,
-      bru.opt = bru.opt.list
+      bru.opt = Bru.opt.list
     )
     
     # create input list to explore model output
@@ -313,14 +352,14 @@ etas <- ETAS()
 Effect of mis-specifying parameters
 
 ```{r}
-# # set copula transformations list
-# link.f1 <- list(
-#   mu = \(x) gamma_t(x, 0.3, 0.6),
-#   K = \(x) unif_t(x, 0, 10),
-#   alpha = \(x) unif_t(x, 0, 10),
-#   c_ = \(x) unif_t(x, 0, 10),
-#   p = \(x) unif_t(x, 1, 10)
-# )
+# set copula transformations list
+link.f1 <- list(
+  mu = \(x) gamma_t(x, 0.3, 0.6),
+  K = \(x) unif_t(x, 0, 10),
+  alpha = \(x) unif_t(x, 0, 10),
+  c_ = \(x) unif_t(x, 0, 10),
+  p = \(x) unif_t(x, 1, 10)
+)
 ```
 
 Synthetic catalogues generation
@@ -373,7 +412,7 @@ mult.synth <- mult.synth.ETAS(ht = NULL)
 Fitting Models on the Synthetic Catalogues
 
 ```{r, message = FALSE, warning = FALSE}
-synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
+synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
                       samp.each.class = 1){
     
     # selecting catalogues
@@ -435,11 +474,9 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
         overdisp[i] <- multi.synth.etas$envir$overdisp
     }
     
-    post[[1]]$post.df$Catalogues <- 
-        paste('Random Catalogue 1: Less than', breaks[2], 'Events')
-    for(i in 2 : length(samp.id)){
+    for(i in samp.id %>% length %>% seq_len){
         post[[i]]$post.df$Catalogues <- 
-        paste('Random Catalogue', i, ':', breaks[i], 'to', breaks[i + 1],
+        paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
               'Events')
     }
     
@@ -464,11 +501,9 @@ synth.fit <- function(breaks = c(0, 125, 150, 200, 400, 1600),
       )
     
     ##
-    Npost[[1]]$post.df$Catalogues <- 
-        paste('Random Catalogue 1: Less than', breaks[2], 'Events')
-    for(i in 2 : length(samp.id)){
+    for(i in samp.id %>% length %>% seq_len){
         Npost[[i]]$post.df$Catalogues <- 
-        paste('Random Catalogue', i, ':', breaks[i], 'to', breaks[i + 1],
+        paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
               'Events')
     }
     
@@ -591,5 +626,5 @@ fore <- ETAS.forecast()
 ```
 
 ```{r}
-# save.image(file = 'Robin_new.RData')
+save.image(file = 'Robin_new.RData')
 ```
