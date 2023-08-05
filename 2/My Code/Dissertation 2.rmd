@@ -238,7 +238,7 @@ bru.opt.list <- list(
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
                  ncore = num.cores, Link.f = link.f,
                  Bru.opt.list = bru.opt.list, n.samp = 1000, 
-                 max.batch = 1000, mag = 4, n.breaks = 100, 
+                 max.batch = 1000, mag = 4.5, n.breaks = 100, 
                  t.end.tri.post = 5, t.end.tri.prior = 10, 
                  t.end.omori.post = 5, t.end.omori.prior = 5){
     
@@ -352,20 +352,20 @@ etas <- ETAS()
 Effect of mis-specifying parameters
 
 ```{r}
-# set copula transformations list
-link.f1 <- list(
-  mu = \(x) gamma_t(x, 0.3, 0.6),
-  K = \(x) unif_t(x, 0, 10),
-  alpha = \(x) unif_t(x, 0, 10),
-  c_ = \(x) unif_t(x, 0, 10),
-  p = \(x) unif_t(x, 1, 10)
-)
+# # set copula transformations list
+# link.f1 <- list(
+#   mu = \(x) gamma_t(x, 0.3, 0.6),
+#   K = \(x) unif_t(x, 0, 10),
+#   alpha = \(x) unif_t(x, 0, 10),
+#   c_ = \(x) unif_t(x, 0, 10),
+#   p = \(x) unif_t(x, 1, 10)
+# )
 ```
 
 Synthetic catalogues generation
 
 ```{r, message = FALSE, warning = FALSE}
-mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
+mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
                      ht = etas$envir$data[which.max(
                          etas$envir$data$magnitudes), ]){
     
@@ -376,13 +376,20 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 500,
     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
     
+    # Function to generate a synthetic catalogue
+    synth.gen <- function(i){
+        iteration <- i
+        synth <- generate_temporal_ETAS_synthetic(
+                    theta = envir$post.par %>% as.list,
+                    beta.p = envir$beta.p,
+                    M0 = envir$m0, T1 = envir$t1,
+                    T2 = envir$t2, Ht = ht, ncore = num.cores)
+        return(synth)
+    }
+    
     # generates catalogues as list of lists
     multi.synth.cat.list <- lapply(seq_len(n.cat), \(x)
-        generate_temporal_ETAS_synthetic(
-          theta = envir$post.samp[x, ],
-          beta.p = envir$beta.p,
-          M0 = envir$m0, T1 = envir$t1,
-          T2 = envir$t2, Ht = ht, ncore = num.cores))
+        synth.gen(x))
 
     # stores catalogues as list of data.frames
     multi.synth.cat.list.df <- lapply(multi.synth.cat.list,
@@ -412,7 +419,7 @@ mult.synth <- mult.synth.ETAS(ht = NULL)
 Fitting Models on the Synthetic Catalogues
 
 ```{r, message = FALSE, warning = FALSE}
-synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
+synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
                       samp.each.class = 1){
     
     # selecting catalogues
@@ -448,11 +455,11 @@ synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
                  labeller = 'label_both')
     
     # modelling
-    input <- vector(mode = 'list', classes %>% levels %>% length)
-    post <- vector(mode = 'list', classes %>% levels %>% length)
+    input <- rep(list(NULL), classes %>% levels %>% length)
+    post <- rep(list(NULL), classes %>% levels %>% length)
     post.par <- matrix(rep(0, (classes %>% levels %>% length) * 5), 
                        ncol = 5)
-    Npost <- vector(mode = 'list', classes %>% levels %>% length)
+    Npost <- rep(list(NULL), classes %>% levels %>% length)
     Npostmean <- rep(0, classes %>% levels %>% length)
     Nlarge <- rep(0, classes %>% levels %>% length)
     abs_dist_int <- rep(0, classes %>% levels %>% length)
@@ -484,9 +491,9 @@ synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
                         param = names(etas$envir$post.par %>% as.list))
     
     # bind marginal posterior data.frames
-    bind.post.df <- rbind(post[[1]]$post.df, post[[2]]$post.df, 
-                          post[[3]]$post.df, post[[4]]$post.df, 
-                          post[[5]]$post.df)
+    bind.post.df <- do.call(rbind, 
+                            lapply(samp.id %>% length %>% seq_len,
+                                   \(i) post[[i]]$post.df))
     
     # plot them
     post.par.plot <- ggplot(bind.post.df, 
@@ -510,9 +517,9 @@ synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
     df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
     
     # bind marginal posterior data.frames
-    bind.post.N.df <- rbind(Npost[[1]]$post.df, Npost[[2]]$post.df, 
-                          Npost[[3]]$post.df, Npost[[4]]$post.df, 
-                          Npost[[5]]$post.df)
+    bind.post.N.df <- do.call(rbind, 
+                            lapply(samp.id %>% length %>% seq_len,
+                                   \(i) Npost[[i]]$post.df))
     
     # plot them
     post.N.plot <- ggplot(bind.post.N.df,
@@ -529,15 +536,19 @@ synth.fit <- function(breaks = c(0, 100, 200, 400, 800, 1600),
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
-mult.synth.fit <- synth.fit()
+mult.synth.fit <- rep(list(NULL), 3)
+mult.synth.fit[[1]] <- synth.fit()
+mult.synth.fit[[2]] <- synth.fit(breaks = 
+                                     c(210, 240, 270, 300, 330, 360, 400))
+mult.synth.fit[[3]] <- synth.fit(breaks = c(400, 600, 800, 1600))
 ```
 
 Analysis on the Behaviours of the Time-between-Events
 
 ```{r}
-ECDF.interarrival <- function(){
+ECDF.interarrival <- function(i){
     
-    samp.id <- mult.synth.fit$environ$samp.id
+    samp.id <- mult.synth.fit[[i]]$environ$samp.id
     Nevents <- mult.synth$environ$Nevents
     
     data.list <- lapply(samp.id %>% length %>% seq_len, \(i) data.frame(
@@ -569,8 +580,8 @@ ECDF.interarrival <- function(){
     
     return(ECDF.plot)
 }
-ecdf_interarrival <- ECDF.interarrival()
-ecdf_interarrival
+
+ecdf_interarrival <- lapply(seq_len(3), \(i) ECDF.interarrival(i))
 ```
 
 Forecasting
