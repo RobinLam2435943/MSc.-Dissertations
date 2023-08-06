@@ -424,10 +424,10 @@ mult.synth.imp <- mult.synth.ETAS(ht = etas$envir$data[which.max(
 Fitting Models on the Synthetic Catalogues
 
 ```{r, message = FALSE, warning = FALSE}
-synth.fit <- function(breaks,
-                      samp.each.class = 1, 
+synth.fit <- function(samp.each.class = 5, 
                       syn = mult.synth,
-                      charac_id = 1){
+                      charac_id = 1, 
+                      bin_id = 1){
     
     # selecting catalogues
     Nevents <- syn$environ$Nevents
@@ -435,6 +435,18 @@ synth.fit <- function(breaks,
     MaxMag <- syn$environ$MaxMag %>% round(2)
     
     characteristic <- switch(charac_id, Nevents, Nlar, MaxMag)
+    breaks <- switch(charac_id,
+                quantile(characteristic, 
+                              probs = 
+                    seq(0, 17 / 20, length.out = 4)[c(bin_id, bin_id + 1)]),
+                quantile(characteristic, 
+                              probs = 
+                    seq(0, 17 / 20, length.out = 4)[c(bin_id, bin_id + 1)]),
+                quantile(characteristic, 
+                              probs = 
+                    seq(0, 17 / 20, length.out = 4)[c(bin_id, bin_id + 1)])
+                )
+    
     
     classes <- cut(characteristic, breaks = breaks)
     samp.id <- rep(0, samp.each.class * (classes %>% levels %>% length))
@@ -470,17 +482,17 @@ synth.fit <- function(breaks,
                  labeller = 'label_both', ncol = 2)
     
     # modelling
-    input <- rep(list(NULL), classes %>% levels %>% length)
-    post <- rep(list(NULL), classes %>% levels %>% length)
-    post.par <- matrix(rep(0, (classes %>% levels %>% length) * 5), 
+    input <- rep(list(NULL), samp.id %>% length)
+    post <- rep(list(NULL), samp.id %>% length)
+    post.par <- matrix(rep(0, (samp.id %>% length) * 5), 
                        ncol = 5)
-    Npost <- rep(list(NULL), classes %>% levels %>% length)
-    Npostmean <- rep(0, classes %>% levels %>% length)
-    abs_dist_int <- rep(0, classes %>% levels %>% length)
-    abs_dist_mag <- rep(0, classes %>% levels %>% length)
-    overdisp <- rep(0, classes %>% levels %>% length)
+    Npost <- rep(list(NULL), samp.id %>% length)
+    Npostmean <- rep(0, samp.id %>% length)
+    abs_dist_int <- rep(0, samp.id %>% length)
+    abs_dist_mag <- rep(0, samp.id %>% length)
+    overdisp <- rep(0, samp.id %>% length)
     
-    for(i in classes %>% levels %>% length %>% seq_len){
+    for(i in samp.id %>% length %>% seq_len){
         multi.synth.etas <- ETAS(data = 
             syn$environ$multi.synth.cat.list.df[[samp.id[i]]],
                                     t1 = syn$environ$envir$t1, 
@@ -492,13 +504,17 @@ synth.fit <- function(breaks,
         abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
         abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
         overdisp[i] <- multi.synth.etas$envir$overdisp
-    }
-    
-    for(i in samp.id %>% length %>% seq_len){
+        
         post[[i]]$post.df$Catalogues <- 
         paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
               'Events, with', Nlar[samp.id[i]], 'Large Events, ',
               'and the Highest Magnitude is', MaxMag[samp.id[i]])
+        
+        Npost[[i]]$post.df$Catalogues <- 
+        paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
+              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+              'and the Highest Magnitude is', 
+              MaxMag[samp.id[i]])
     }
     
     df.true.param <- data.frame(x = etas$envir$post.par, 
@@ -522,14 +538,6 @@ synth.fit <- function(breaks,
       )
     
     ##
-    for(i in samp.id %>% length %>% seq_len){
-        Npost[[i]]$post.df$Catalogues <- 
-        paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
-              'and the Highest Magnitude is', 
-              MaxMag[samp.id[i]])
-    }
-    
     df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
     
     # bind marginal posterior data.frames
@@ -552,15 +560,27 @@ synth.fit <- function(breaks,
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
-mult.synth.fit <- rep(list(NULL), 4)
-mult.synth.fit[[1]] <- synth.fit(breaks =
-                                     c(0, 110, 130, 150, 170, 190, 210))
-# mult.synth.fit[[2]] <- synth.fit(breaks =
-#                                      c(210, 240, 270, 300, 330, 360, 400))
-# mult.synth.fit[[3]] <- synth.fit(breaks = c(400, 600, 800, 1600))
-# 
-# mult.synth.fit[[4]] <- synth.fit(breaks = c(0, 400, 800, 1600), 
-#                                  samp.each.class = 2, syn = mult.synth.imp) 
+mult.synth.fit <- rep(list(NULL), 9)
+mult.synth.fit[[1]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 1, bin_id = 1)
+mult.synth.fit[[2]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 1, bin_id = 2)
+mult.synth.fit[[3]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 1, bin_id = 3)
+
+mult.synth.fit[[4]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 2, bin_id = 1)
+mult.synth.fit[[5]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 2, bin_id = 2)
+mult.synth.fit[[6]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 2, bin_id = 3)
+
+mult.synth.fit[[7]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 3, bin_id = 1)
+mult.synth.fit[[8]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 3, bin_id = 2)
+mult.synth.fit[[9]] <- synth.fit(syn = mult.synth.imp, 
+                                 charac_id = 3, bin_id = 3)
 ```
 
 Analysis on the Behaviours of the Time-between-Events
@@ -602,7 +622,7 @@ ECDF.interarrival <- function(j){
     return(ECDF.plot)
 }
 
-ecdf_interarrival <- lapply(seq_len(1), \(j) ECDF.interarrival(j))
+ecdf_interarrival <- lapply(seq_len(9), \(j) ECDF.interarrival(j))
 ```
 
 Forecasting
