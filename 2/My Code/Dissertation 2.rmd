@@ -99,32 +99,23 @@ inv.link.f <- list(
 # obtain sample from standard normal distribution
 X <- rnorm(1000)
 # apply copula transformations
-gamma.X <- gamma_t(X, .3, .6)
+gamma.X <- gamma_t(X, 0.3, 0.6)
 unif.X <- unif_t(X, 0, 10)
-exp.X <- exp_t(X, 1)
-loggaus.X <- loggaus_t(X, .5, .5)
+unif.X.2 <- unif_t(X, 1, 10)
 
 # build data.frame for plotting
 df.to.plot <- rbind(
   data.frame(
-    value = X,
-    distribution = "Std Normal"
-  ),
-  data.frame(
     value = gamma.X,
-    distribution = "Gamma"
+    distribution = "Gamma(0.3, 0.6)"
   ),
   data.frame(
     value = unif.X,
-    distribution = "Uniform"
+    distribution = "Uniform(0, 10)"
   ),
   data.frame(
-    value = exp.X,
-    distribution = "Exponential"
-  ),
-  data.frame(
-    value = loggaus.X,
-    distribution = "Log-Gaussian"
+    value = unif.X.2,
+    distribution = "Uniform(1, 10)"
   )
 )
 # plot them
@@ -395,16 +386,27 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
     multi.synth.cat.list.df <- lapply(multi.synth.cat.list,
                                       \(x) do.call(rbind, x))
     
-    # calculates the number of events in each catalogue
-    Nevents <- unlist(lapply(seq_len(n.cat), \(i) nrow(
-        multi.synth.cat.list.df[[i]])))
+    # counts the number of events in each catalogue
+    Nevents <- lapply(seq_len(n.cat), \(i) nrow(
+        multi.synth.cat.list.df[[i]])) %>% unlist
+    
+    # counts the number of large events in each catalogue
+    mag <- etas$envir$mag
+    Nlarge <- lapply(seq_len(n.cat), \(i) sum(
+        multi.synth.cat.list.df[[i]]$magnitudes >= mag)) %>% unlist
+    
+    # extracts the highest magnitude in each catalogue
+    MaxMag <- lapply(seq_len(n.cat), \(i) max(
+        multi.synth.cat.list.df[[i]]$magnitudes)) %>% unlist
     
     # sets catalogue identifier
     multi.synth.cat.list.df <- lapply(seq_len(n.cat),
                                       \(x) cbind(
                                           multi.synth.cat.list.df[[x]],
-                                            cat.idx = x, 
-                                          num_events = Nevents[x]))
+                                          cat.idx = x, 
+                                          num_events = Nevents[x],
+                                          num_large = Nlarge[x],
+                                          max_mag = MaxMag[x]))
     
     # merges catalogues in unique data.frame
     multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
@@ -413,33 +415,46 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
+
 mult.synth <- mult.synth.ETAS(ht = NULL)
+mult.synth.imp <- mult.synth.ETAS(ht = etas$envir$data[which.max(
+                         etas$envir$data$magnitudes), ])
 ```
 
 Fitting Models on the Synthetic Catalogues
 
 ```{r, message = FALSE, warning = FALSE}
-synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
-                      samp.each.class = 1){
+synth.fit <- function(breaks,
+                      samp.each.class = 1, 
+                      syn = mult.synth,
+                      charac_id = 1){
     
     # selecting catalogues
-    Nevents <- mult.synth$environ$Nevents
-    classes <- cut(Nevents, breaks = breaks)
+    Nevents <- syn$environ$Nevents
+    Nlar <- syn$environ$Nlarge
+    MaxMag <- syn$environ$MaxMag %>% round(2)
+    
+    characteristic <- switch(charac_id, Nevents, Nlar, MaxMag)
+    
+    classes <- cut(characteristic, breaks = breaks)
     samp.id <- rep(0, samp.each.class * (classes %>% levels %>% length))
     for(i in classes %>% levels %>% length %>% seq_len){
         samp.id[(samp.each.class * (i - 1) + 1) : (samp.each.class * i)] <- 
-            sample(which(classes == levels(classes)[i]), samp.each.class)
+            sample(which(classes == levels(classes)[i]), 
+                   samp.each.class)
     }
     
     # we need to bing the synthetics with the observed catalogue 
     # for plotting
     cat.df.for.plotting <- rbind(
-      mult.synth$environ$multi.synth.cat.df[
+      syn$environ$multi.synth.cat.df[
         which(
-          mult.synth$environ$multi.synth.cat.df$cat.idx %in% samp.id), 
+          syn$environ$multi.synth.cat.df$cat.idx %in% samp.id), 
         ],
-      cbind(mult.synth$environ$envir$data[, c("ts", "magnitudes")],
-        gen = NA, cat.idx = "observed", num_events = nrow(etas$envir$data)
+      cbind(syn$environ$envir$data[, c("ts", "magnitudes")],
+        gen = NA, cat.idx = "observed", num_events = nrow(etas$envir$data),
+        num_large = etas$envir$Nlarge, 
+        max_mag = max(etas$envir$data$magnitudes) %>% round(2)
       )
     )
 
@@ -448,11 +463,11 @@ synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
                                    aes(ts, magnitudes)) +
       geom_point(size = 0.5) +
       geom_point(
-        data = mult.synth$environ$ht, 
+        data = syn$environ$ht, 
         mapping = aes(ts, magnitudes), colour = "black"
       ) +
-      facet_wrap(facets = vars(cat.idx, num_events), 
-                 labeller = 'label_both')
+      facet_wrap(facets = vars(cat.idx, num_events, num_large, max_mag), 
+                 labeller = 'label_both', ncol = 2)
     
     # modelling
     input <- rep(list(NULL), classes %>% levels %>% length)
@@ -461,21 +476,19 @@ synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
                        ncol = 5)
     Npost <- rep(list(NULL), classes %>% levels %>% length)
     Npostmean <- rep(0, classes %>% levels %>% length)
-    Nlarge <- rep(0, classes %>% levels %>% length)
     abs_dist_int <- rep(0, classes %>% levels %>% length)
     abs_dist_mag <- rep(0, classes %>% levels %>% length)
     overdisp <- rep(0, classes %>% levels %>% length)
     
     for(i in classes %>% levels %>% length %>% seq_len){
         multi.synth.etas <- ETAS(data = 
-            mult.synth$environ$multi.synth.cat.list.df[[samp.id[i]]],
-                                    t1 = mult.synth$environ$envir$t1, 
-                                    t2 = mult.synth$environ$envir$t2)
+            syn$environ$multi.synth.cat.list.df[[samp.id[i]]],
+                                    t1 = syn$environ$envir$t1, 
+                                    t2 = syn$environ$envir$t2)
         post[[i]] <- multi.synth.etas$envir$post.list
         post.par[i,] <- multi.synth.etas$envir$post.par
         Npost[[i]] <- multi.synth.etas$envir$N.post
         Npostmean[i] <- multi.synth.etas$envir$Npostmean
-        Nlarge[i] <- multi.synth.etas$envir$Nlarge
         abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
         abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
         overdisp[i] <- multi.synth.etas$envir$overdisp
@@ -484,7 +497,8 @@ synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
     for(i in samp.id %>% length %>% seq_len){
         post[[i]]$post.df$Catalogues <- 
         paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-              'Events')
+              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+              'and the Highest Magnitude is', MaxMag[samp.id[i]])
     }
     
     df.true.param <- data.frame(x = etas$envir$post.par, 
@@ -511,7 +525,9 @@ synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
     for(i in samp.id %>% length %>% seq_len){
         Npost[[i]]$post.df$Catalogues <- 
         paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-              'Events')
+              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+              'and the Highest Magnitude is', 
+              MaxMag[samp.id[i]])
     }
     
     df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
@@ -536,44 +552,49 @@ synth.fit <- function(breaks = c(0, 110, 130, 150, 170, 190, 210),
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
-mult.synth.fit <- rep(list(NULL), 3)
-mult.synth.fit[[1]] <- synth.fit()
-mult.synth.fit[[2]] <- synth.fit(breaks = 
-                                     c(210, 240, 270, 300, 330, 360, 400))
-mult.synth.fit[[3]] <- synth.fit(breaks = c(400, 600, 800, 1600))
+mult.synth.fit <- rep(list(NULL), 4)
+mult.synth.fit[[1]] <- synth.fit(breaks =
+                                     c(0, 110, 130, 150, 170, 190, 210))
+# mult.synth.fit[[2]] <- synth.fit(breaks =
+#                                      c(210, 240, 270, 300, 330, 360, 400))
+# mult.synth.fit[[3]] <- synth.fit(breaks = c(400, 600, 800, 1600))
+# 
+# mult.synth.fit[[4]] <- synth.fit(breaks = c(0, 400, 800, 1600), 
+#                                  samp.each.class = 2, syn = mult.synth.imp) 
 ```
 
 Analysis on the Behaviours of the Time-between-Events
 
 ```{r}
-ECDF.interarrival <- function(i){
+ECDF.interarrival <- function(j){
     
-    samp.id <- mult.synth.fit[[i]]$environ$samp.id
-    Nevents <- mult.synth$environ$Nevents
+    samp.id <- mult.synth.fit[[j]]$environ$samp.id
+    Nevents <- mult.synth.fit[[j]]$environ$Nevents
+    Nlar <- mult.synth.fit[[j]]$environ$Nlar
+    MaxMag <- mult.synth.fit[[j]]$environ$MaxMag
     
     data.list <- lapply(samp.id %>% length %>% seq_len, \(i) data.frame(
         Time_between_events = 
             mult.synth$environ$multi.synth.cat.list.df[[samp.id[i]]]$ts %>%
                 sort %>% diff, 
-        Num_Events = paste(Nevents[samp.id[i]], '(synthetic)')
+        Catalogues = paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
+              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+              'and the Highest Magnitude is', 
+              MaxMag[samp.id[i]])
         )
     )
     
     data.list[[length(samp.id) + 1]] <- data.frame(
         Time_between_events = etas$envir$interarrival, 
-        Num_Events = paste(nrow(etas$envir$data), '(observed)'))
-    
-    data.list[[length(samp.id) + 2]] <- data.frame(
-        Time_between_events = 
-            rexp(length(etas$envir$interarrival), 
-                 1 / etas$envir$m_int_time), 
-        Num_Events = paste(nrow(etas$envir$data), 
-                           '(under exponential assumption)'))
+        Catalogues = paste('Observed', ':', nrow(etas$envir$data),
+              'Events, with', etas$envir$Nlarge, 'Large Events, ',
+              'and the Highest Magnitude is', 
+              max(etas$envir$data$magnitudes) %>% round(2)))
     
     df <- do.call(rbind, data.list)
     
     ECDF.plot <- ggplot(df, aes(x = Time_between_events, 
-                                colour = Num_Events)) +
+                                colour = Catalogues)) +
         stat_ecdf() + 
         xlab('Time between Events') +
       ylab('Empirical Cumulative Probability')
@@ -581,7 +602,7 @@ ECDF.interarrival <- function(i){
     return(ECDF.plot)
 }
 
-ecdf_interarrival <- lapply(seq_len(3), \(i) ECDF.interarrival(i))
+ecdf_interarrival <- lapply(seq_len(1), \(j) ECDF.interarrival(j))
 ```
 
 Forecasting
@@ -637,5 +658,5 @@ fore <- ETAS.forecast()
 ```
 
 ```{r}
-# save.image(file = 'Robin_new.RData')
+save.image(file = 'Robin_new.RData')
 ```
