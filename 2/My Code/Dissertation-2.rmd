@@ -56,30 +56,9 @@ if(!require(cluster)){
 if(file.exists('Dissertation.RData')){
     load('Dissertation.RData')
 }
-
-require(tidyverse)
-require(knitr)
-require(kableExtra)
-require(factoextra)
-require(cluster)
-require(ETAS.inlabru)
-require(ggplot2)
-require(dplyr)
-require(magrittr)
-require(tidyquant)
-require(rnaturalearth)
-require(terra)
-require(sf)
-require(ggspatial)
-require(rnaturalearthdata)
-require(lubridate)
-
-num.cores <- 1
-future::plan(future::multisession, workers = num.cores)
-INLA::inla.setOption(num.threads = num.cores)
 ```
 
-```{r, message = FALSE, warning = FALSE, eval = FALSE}
+```{r, message = FALSE, warning = FALSE}
 require(tidyverse)
 require(knitr)
 require(kableExtra)
@@ -107,7 +86,7 @@ Copula transformation of the priors
 ```{r, eval = !file.exists('Dissertation.RData')}
 # set copula transformations list
 link.f <- list(
-  mu = \(x) gamma_t(x, 0.3, 0.6),
+  mu = \(x) gamma_t(x, .3, .6),
   K = \(x) unif_t(x, 0, 10),
   alpha = \(x) unif_t(x, 0, 10),
   c_ = \(x) unif_t(x, 0, 10),
@@ -116,7 +95,7 @@ link.f <- list(
 
 # set inverse copula transformations list
 inv.link.f <- list(
-  mu = \(x) inv_gamma_t(x, 0.3, 0.6),
+  mu = \(x) inv_gamma_t(x, .3, .6),
   K = \(x) inv_unif_t(x, 0, 10),
   alpha = \(x) inv_unif_t(x, 0, 10),
   c_ = \(x) inv_unif_t(x, 0, 10),
@@ -128,7 +107,7 @@ inv.link.f <- list(
 # obtain sample from standard normal distribution
 X <- rnorm(1000)
 # apply copula transformations
-gamma.X <- gamma_t(X, 0.3, 0.6)
+gamma.X <- gamma_t(X, .3, .6)
 unif.X <- unif_t(X, 0, 10)
 unif.X.2 <- unif_t(X, 1, 10)
 
@@ -234,10 +213,10 @@ aquila.bru <- data.frame(
 ```{r, eval = !file.exists('Dissertation.RData')}
 # set up list of initial values
 th.init <- list(
-  th.mu = inv.link.f$mu(0.5),
-  th.K = inv.link.f$K(0.1),
+  th.mu = inv.link.f$mu(.5),
+  th.K = inv.link.f$K(.1),
   th.alpha = inv.link.f$alpha(1),
-  th.c = inv.link.f$c_(0.1),
+  th.c = inv.link.f$c_(.1),
   th.p = inv.link.f$p(1.1)
 )
 ```
@@ -246,7 +225,7 @@ th.init <- list(
 # set starting and time of the time interval used for model fitting. 
 # In this case, we use the interval covered by the data.
 T1 <- 0
-T2 <- max(aquila.bru$ts) + 0.2 # Use max(..., na.rm = TRUE) if there may 
+T2 <- max(aquila.bru$ts) + .2 # Use max(..., na.rm = TRUE) if there may 
 # still be NAs here
 ```
 
@@ -279,7 +258,7 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       T2 = t2,
       link.functions = Link.f,
       coef.t. = 1,
-      delta.t. = 0.1,
+      delta.t. = .1,
       N.max. = 5,
       bru.opt = Bru.opt.list
     )
@@ -377,15 +356,68 @@ etas <- ETAS()
 
 Effect of mis-specifying parameters
 
-```{r}
-# # set copula transformations list
-# link.f1 <- list(
-#   mu = \(x) gamma_t(x, 0.3, 0.6),
-#   K = \(x) unif_t(x, 0, 10),
-#   alpha = \(x) unif_t(x, 0, 10),
-#   c_ = \(x) unif_t(x, 0, 10),
-#   p = \(x) unif_t(x, 1, 10)
-# )
+```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
+Copula <- function(mu_a = .3, mu_b = .6, 
+                   k_a = 0, k_b = 10,
+                   alp_a = 0, alp_b = 10,
+                   c_a = 0, c_b = 10,
+                   p_a = 1, p_b = 10){
+    
+    # set copula transformations list
+    linkf <- list(
+      mu = \(x) gamma_t(x, mu_a, mu_b),
+      K = \(x) unif_t(x, k_a, k_b),
+      alpha = \(x) unif_t(x, alp_a, alp_b),
+      c_ = \(x) unif_t(x, c_a, c_b),
+      p = \(x) unif_t(x, p_a, p_b)
+    )
+    
+    # set inverse copula transformations list
+    invlinkf <- list(
+      mu = \(x) inv_gamma_t(x, mu_a, mu_b),
+      K = \(x) inv_unif_t(x, k_a, k_b),
+      alpha = \(x) inv_unif_t(x, alp_a, alp_b),
+      c_ = \(x) inv_unif_t(x, c_a, c_b),
+      p = \(x) inv_unif_t(x, p_a, p_b)
+    )
+    
+    # set up list of initial values
+    thinit <- list(
+      th.mu = invlinkf$mu(.5),
+      th.K = invlinkf$K(1),
+      th.alpha = invlinkf$alpha(1),
+      th.c = invlinkf$c_(1),
+      th.p = invlinkf$p(5)
+    )
+    
+    # set up list of bru options
+    bruoptlist <- list(
+      bru_verbose = 3, # type of visual output
+      bru_max_iter = 70, # maximum number of iterations
+      # bru_method = list(max_step = 0.5),
+      bru_initial = thinit # parameters' initial values
+    )
+    
+    # returns the whole environment
+    environ <- as.list(environment())
+    return(tibble::lst(environ))
+}
+cop_mis_mu <- Copula(mu_a = 5, mu_b = 1)
+cop_mis_K <- Copula(k_a = .99, k_b = 1.01)
+cop_mis_alp <- Copula(mu_a = .99, mu_b = 1.01)
+cop_mis_c <- Copula(c_a = .99, c_b = 1.01)
+cop_mis_p <- Copula(p_a = 4.9, p_b = 5.1)
+
+etas_mis_mu <- ETAS(Link.f = cop_mis_mu$environ$linkf, 
+                   Bru.opt.list = cop_mis_mu$environ$bruoptlist)
+etas_mis_K <- ETAS(Link.f = cop_mis_K$environ$linkf, 
+                   Bru.opt.list = cop_mis_K$environ$bruoptlist)
+etas_mis_alp <- ETAS(Link.f = cop_mis_alp$environ$linkf, 
+                   Bru.opt.list = cop_mis_alp$environ$bruoptlist)
+etas_mis_c <- ETAS(Link.f = cop_mis_c$environ$linkf, 
+                   Bru.opt.list = cop_mis_c$environ$bruoptlist)
+etas_mis_p <- ETAS(Link.f = cop_mis_p$environ$linkf, 
+                   Bru.opt.list = cop_mis_p$environ$bruoptlist)
 ```
 
 Synthetic catalogues generation
@@ -440,7 +472,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
                                           cat.idx = x, 
                                           num_events = Nevents[x],
                                           num_large = Nlarge[x],
-                                          max_mag = MaxMag[x]))
+                                    max_mag = MaxMag[x] %>% round(2)))
     
     # merges catalogues in unique data.frame
     multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
@@ -453,7 +485,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
 mult.synth <- mult.synth.ETAS(ht = NULL)
 ```
 
-```{r}
+```{r, eval = !file.exists('Dissertation.RData')}
 synth.imp <- function(n.cat = 20, n.samp = 3,
                       t1 = NULL, t2 = NULL){
 
@@ -461,36 +493,36 @@ synth.imp <- function(n.cat = 20, n.samp = 3,
     samp_Nlarge <- seq(1, 4, by = 1) %>% sample(n.samp) %>% sort
     samp_mag_single <- median(samp_mag)
     samp_N <- sum(samp_Nlarge)
-    
-    samps1 <- n.samp %>% 
-                seq_len %>% 
+
+    samps1 <- n.samp %>%
+                seq_len %>%
                 lapply(\(i) rep(samp_mag[i], samp_Nlarge[i])) %>%
                 unlist
-    
-    samps2 <- n.samp %>% 
-                seq_len %>% 
+
+    samps2 <- n.samp %>%
+                seq_len %>%
                 lapply(\(i) rep(samp_mag_single, samp_N)) %>%
                 unlist
 
     # inherits the environment from function `ETAS`
-    envir <- etas$envir  
-    
+    envir <- etas$envir
+
     # updates environments if specified by users
     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
-    
+
     ##
     t <- seq(envir$t1, envir$t2, by = .01) %>% sample(samp_N)
-        
+
     ##
     ht1 <- data.frame(ts = t, magnitudes = samps1)
     ht2 <- data.frame(ts = t, magnitudes = samps2)
 
     mult.synth.imp1 <- mult.synth.ETAS(ht = ht1, n.cat = n.cat)
     mult.synth.imp2 <- mult.synth.ETAS(ht = ht2, n.cat = n.cat)
-    
+
     mult.synth.imp <- tibble::lst(mult.synth.imp1, mult.synth.imp2)
-    
+
     # returns the whole environment
     environ <- as.list(environment())
     return(tibble::lst(envir))
@@ -498,7 +530,7 @@ synth.imp <- function(n.cat = 20, n.samp = 3,
     return(environ)
 }
 
-mult.synth.imp <- synth.imp()
+# mult.synth.imp <- synth.imp()
 ```
 
 Fitting Models on the Synthetic Catalogues
@@ -517,6 +549,8 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
     syn.cat.info <- multi.synth.cat.list.df %>% length %>% seq_len %>% 
         lapply(\(i) multi.synth.cat.list.df[[i]][1, 5 : 7])
     synth.df <- do.call(rbind, syn.cat.info)
+    
+    ## 3d
     
     # Calculate the agglomerative coefficients for different 
     # linkage methods, and select the method with the highest
@@ -554,12 +588,37 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
 ```{r, message = FALSE, warning = FALSE}
 synth.model <- function(syn = mult.synth, 
                         kmax = 30,
-                        slice = seq(1, 7, by = 1)){
+                        slice = seq(1, 5, by = 1)){
     
     Nevents <- syn$environ$Nevents
     Nlar <- syn$environ$Nlarge
     MaxMag <- syn$environ$MaxMag %>% round(2)
-    samp.id <- hier_clu_samp(syn, kmax)
+    samp.id <- hier_clu_samp(syn, kmax)[slice]
+    
+    # we need to bing the synthetics with the observed catalogue 
+    # for plotting
+    cat.df.for.plotting <- rbind(
+      syn$environ$multi.synth.cat.df[
+        which(
+          syn$environ$multi.synth.cat.df$cat.idx %in% samp.id), 
+        ],
+      cbind(syn$environ$envir$data[, c("ts", "magnitudes")],
+        gen = NA, cat.idx = "observed", num_events = nrow(etas$envir$data),
+        num_large = etas$envir$Nlarge, 
+        max_mag = max(etas$envir$data$magnitudes) %>% round(2)
+      )
+    )
+
+    # plot them
+    multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
+                                   aes(ts, magnitudes)) +
+      geom_point(size = 0.5) +
+      geom_point(
+        data = syn$environ$ht, 
+        mapping = aes(ts, magnitudes), colour = "black"
+      ) +
+      facet_wrap(facets = vars(cat.idx, num_events, num_large, max_mag), 
+                 labeller = 'label_both', ncol = 6)
     
     # modelling
     post <- rep(list(NULL), samp.id %>% length)
@@ -604,259 +663,8 @@ synth.model <- function(syn = mult.synth,
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
-mult.synth.fit <- lapply(seq_len(3), \(i) synth.model(syn = mult.synth,
-                            slice = seq(7 * (i - 1) + 1, 7 * i, by = 1)))
-# mult.synth.fit[[4]] <- synth.model(syn = 
-#                    mult.synth.imp$environ$mult.synth.imp[[1]], kmax = 10)
-```
-
-```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
-# synth.fit <- function(samp.each.class = 5, 
-#             
-#                       syn = mult.synth,
-#                       charac_id = 1, 
-#                       bin_id = 1,
-#                       impose_type = 1){
-#     
-#     if(is.null(syn)){
-#         syn1 <- synth.imp(impose_type = impose_type)
-#         syn <- syn1
-#         
-#         # selecting catalogues
-#         Nevents <- syn$environ$Nevents
-#         Nlar <- syn$environ$Nlarge
-#         MaxMag <- syn$environ$MaxMag %>% round(2)
-#         
-#         # we need to bing the synthetics with the observed catalogue 
-#         # for plotting
-#         cat.df.for.plotting <- rbind(
-#           syn$environ$multi.synth.cat.df,
-#           cbind(syn$environ$envir$data[, c("ts", "magnitudes")],
-#             gen = NA, cat.idx = "observed", 
-#             num_events = nrow(etas$envir$data),
-#             num_large = etas$envir$Nlarge, 
-#             max_mag = max(etas$envir$data$magnitudes) %>% round(2)
-#           )
-#         )
-#         
-#     }else{
-#         syn1 <- NULL
-#         # selecting catalogues
-#         Nevents <- syn$environ$Nevents
-#         Nlar <- syn$environ$Nlarge
-#         MaxMag <- syn$environ$MaxMag %>% round(2)
-#         
-#         characteristic <- switch(charac_id, Nevents, Nlar)
-#         breaks <- switch(charac_id,
-#                     quantile(characteristic, 
-#                                   probs = 
-#                         seq(0, 17 / 20, length.out = 4)[
-#                             c(bin_id, bin_id + 1)]),
-#                     quantile(characteristic + .1, 
-#                                   probs = 
-#                         seq(0, 17 / 20, length.out = 4)[
-#                             c(bin_id, bin_id + 1)])
-#                     )
-#         
-#         
-#         classes <- cut(characteristic, breaks = breaks)
-#         samp.id <- rep(0, samp.each.class * (classes %>% levels %>% length))
-#         for(i in classes %>% levels %>% length %>% seq_len){
-#             samp.id[(samp.each.class * (i - 1) + 1) : 
-#                         (samp.each.class * i)] <- 
-#                 sample(which(classes == levels(classes)[i]), 
-#                        samp.each.class)
-#         }
-#         
-#         # we need to bing the synthetics with the observed catalogue 
-#         # for plotting
-#         cat.df.for.plotting <- rbind(
-#           syn$environ$multi.synth.cat.df[
-#             which(
-#               syn$environ$multi.synth.cat.df$cat.idx %in% samp.id), 
-#             ],
-#           cbind(syn$environ$envir$data[, c("ts", "magnitudes")],
-#             gen = NA, cat.idx = "observed", 
-#             num_events = nrow(etas$envir$data),
-#             num_large = etas$envir$Nlarge, 
-#             max_mag = max(etas$envir$data$magnitudes) %>% round(2)
-#           )
-#         )
-#     }
-# 
-#     # plot them
-#     multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
-#                                    aes(ts, magnitudes)) +
-#       geom_point(size = 0.5) +
-#       geom_point(
-#         data = syn$environ$ht, 
-#         mapping = aes(ts, magnitudes), colour = "black"
-#       ) +
-#       facet_wrap(facets = 
-#                      vars(cat.idx, num_events, num_large, max_mag), 
-#                  labeller = 'label_both', ncol = 2)
-#     
-#     if(!(is.null(syn1))){
-#         # modelling
-#         input <- rep(list(NULL), syn$environ$n.cat)
-#         post <- rep(list(NULL), syn$environ$n.cat)
-#         post.par <- matrix(rep(0, (syn$environ$n.cat) * 5), 
-#                            ncol = 5)
-#         Npost <- rep(list(NULL), syn$environ$n.cat)
-#         Npostmean <- rep(0, syn$environ$n.cat)
-#         abs_dist_int <- rep(0, syn$environ$n.cat)
-#         abs_dist_mag <- rep(0, syn$environ$n.cat)
-#         overdisp <- rep(0, syn$environ$n.cat)
-#         
-#         for(i in syn$environ$n.cat %>% seq_len){
-#             multi.synth.etas <- ETAS(data = 
-#                               syn$environ$multi.synth.cat.df,
-#                                         t1 = syn$environ$envir$t1, 
-#                                         t2 = syn$environ$envir$t2)
-#             post[[i]] <- multi.synth.etas$envir$post.list
-#             post.par[i,] <- multi.synth.etas$envir$post.par
-#             Npost[[i]] <- multi.synth.etas$envir$N.post
-#             Npostmean[i] <- multi.synth.etas$envir$Npostmean
-#             abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
-#             abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
-#             overdisp[i] <- multi.synth.etas$envir$overdisp
-#             
-#             post[[i]]$post.df$Catalogues <- 
-#             paste('Random Catalogue', i, ':', Nevents[i],
-#                   'Events, with', Nlar[i], 'Large Events, ',
-#                   'and the Highest Magnitude is', MaxMag[i])
-#             
-#             Npost[[i]]$post.df$Catalogues <- 
-#             paste('Random Catalogue', i, ':', Nevents[i],
-#                   'Events, with', Nlar[i], 'Large Events, ',
-#                   'and the Highest Magnitude is', 
-#                   MaxMag[i])
-#         }
-#         
-#         df.true.param <- data.frame(x = etas$envir$post.par, 
-#                             param = names(etas$envir$post.par %>% as.list))
-#         
-#         # bind marginal posterior data.frames
-#         bind.post.df <- do.call(rbind, 
-#                                 lapply(syn$environ$n.cat %>% seq_len,
-#                                        \(i) post[[i]]$post.df))
-#         
-#         # plot them
-#         post.par.plot <- ggplot(bind.post.df, 
-#                                 aes(x = x, y = y, colour = Catalogues)) +
-#           geom_line() +
-#           facet_wrap(facets = ~ param, scales = "free") +
-#           xlab("param") +
-#           ylab("pdf") +
-#           geom_vline(
-#             data = df.true.param,
-#             mapping = aes(xintercept = x), linetype = 2
-#           )
-#         
-#         ##
-#         df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
-#         
-#         # bind marginal posterior data.frames
-#         bind.post.N.df <- do.call(rbind, 
-#                                 lapply(syn$environ$n.cat %>% seq_len,
-#                                        \(i) Npost[[i]]$post.df))
-#         
-#         # plot them
-#         post.N.plot <- ggplot(bind.post.N.df,
-#                               aes(x = N, y = mean, colour = Catalogues)) +
-#           geom_line() +
-#           xlab("N") +
-#           ylab("pdf") +
-#           geom_vline(
-#             data = df.true.N,
-#             mapping = aes(xintercept = N), linetype = 2
-#           )
-#         
-#     }else{
-#         # modelling
-#         input <- rep(list(NULL), samp.id %>% length)
-#         post <- rep(list(NULL), samp.id %>% length)
-#         post.par <- matrix(rep(0, (samp.id %>% length) * 5), 
-#                            ncol = 5)
-#         Npost <- rep(list(NULL), samp.id %>% length)
-#         Npostmean <- rep(0, samp.id %>% length)
-#         abs_dist_int <- rep(0, samp.id %>% length)
-#         abs_dist_mag <- rep(0, samp.id %>% length)
-#         overdisp <- rep(0, samp.id %>% length)
-#         
-#         for(i in samp.id %>% length %>% seq_len){
-#             multi.synth.etas <- ETAS(data = 
-#                 syn$environ$multi.synth.cat.list.df[[samp.id[i]]],
-#                                         t1 = syn$environ$envir$t1, 
-#                                         t2 = syn$environ$envir$t2)
-#             post[[i]] <- multi.synth.etas$envir$post.list
-#             post.par[i,] <- multi.synth.etas$envir$post.par
-#             Npost[[i]] <- multi.synth.etas$envir$N.post
-#             Npostmean[i] <- multi.synth.etas$envir$Npostmean
-#             abs_dist_int[i] <- multi.synth.etas$envir$abs_dist_int
-#             abs_dist_mag[i] <- multi.synth.etas$envir$abs_dist_mag
-#             overdisp[i] <- multi.synth.etas$envir$overdisp
-#             
-#             post[[i]]$post.df$Catalogues <- 
-#             paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-#                   'Events, with', Nlar[samp.id[i]], 'Large Events, ',
-#                   'and the Highest Magnitude is', MaxMag[samp.id[i]])
-#             
-#             Npost[[i]]$post.df$Catalogues <- 
-#             paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-#                   'Events, with', Nlar[samp.id[i]], 'Large Events, ',
-#                   'and the Highest Magnitude is', 
-#                   MaxMag[samp.id[i]])
-#         }
-#         
-#         df.true.param <- data.frame(x = etas$envir$post.par, 
-#                             param = names(etas$envir$post.par %>% as.list))
-#         
-#         # bind marginal posterior data.frames
-#         bind.post.df <- do.call(rbind, 
-#                                 lapply(samp.id %>% length %>% seq_len,
-#                                        \(i) post[[i]]$post.df))
-#         
-#         # plot them
-#         post.par.plot <- ggplot(bind.post.df, 
-#                                 aes(x = x, y = y, colour = Catalogues)) +
-#           geom_line() +
-#           facet_wrap(facets = ~ param, scales = "free") +
-#           xlab("param") +
-#           ylab("pdf") +
-#           geom_vline(
-#             data = df.true.param,
-#             mapping = aes(xintercept = x), linetype = 2
-#           )
-#         
-#         ##
-#         df.true.N <- data.frame(N = etas$envir$Npostmean, param = 'N')
-#         
-#         # bind marginal posterior data.frames
-#         bind.post.N.df <- do.call(rbind, 
-#                                 lapply(samp.id %>% length %>% seq_len,
-#                                        \(i) Npost[[i]]$post.df))
-#         
-#         # plot them
-#         post.N.plot <- ggplot(bind.post.N.df,
-#                               aes(x = N, y = mean, colour = Catalogues)) +
-#           geom_line() +
-#           xlab("N") +
-#           ylab("pdf") +
-#           geom_vline(
-#             data = df.true.N,
-#             mapping = aes(xintercept = N), linetype = 2
-#           )
-#     }
-#     
-#     # returns the whole environment
-#     environ <- as.list(environment())
-#     return(tibble::lst(environ))
-# }
-# # mult.synth.fit <- lapply(seq_len(6), \(i) synth.fit(syn = mult.synth, 
-# #                                            charac_id = (i - 1) %/% 3 + 1,
-# #                                            bin_id = (i - 1) %% 3 + 1))
-# # test <- synth.fit(syn = NULL, impose_type = 1)
+mult.synth.fit <- lapply(seq_len(4), \(i) synth.model(syn = mult.synth,
+                            slice = seq(5 * (i - 1) + 1, 5 * i, by = 1)))
 ```
 
 Analysis on the Behaviours of the Time-between-Events
@@ -898,9 +706,9 @@ ECDF.interarrival <- function(j){
     return(ECDF.plot)
 }
 
-ecdf_interarrival <- lapply(seq_len(5), \(j) ECDF.interarrival(j))
+ecdf_interarrival <- lapply(seq_len(4), \(j) ECDF.interarrival(j))
 ```
 
-```{r, include = FALSE, eval = !file.exists('Dissertation.RData')}
+```{r, include = FALSE}
 save.image(file = 'Dissertation.RData')
 ```
