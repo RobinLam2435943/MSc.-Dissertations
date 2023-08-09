@@ -12,7 +12,7 @@ editor: visual
 highlight-style: atom-one
 ---
 
-```{r setup, include = FALSE}
+```{r setup, include = FALSE, message = FALSE, warning = FALSE}
 if(!require(tidyverse)){
     install.packages('tidyverse')
 }
@@ -53,6 +53,10 @@ if(!require(cluster)){
     install.packages('cluster')
 }
 
+if(!require(plotly)){
+    instal.packages('plotly')
+}
+
 if(file.exists('Dissertation.RData')){
     load('Dissertation.RData')
 }
@@ -66,6 +70,7 @@ require(factoextra)
 require(cluster)
 require(ETAS.inlabru)
 require(ggplot2)
+require(plotly)
 require(dplyr)
 require(magrittr)
 require(tidyquant)
@@ -128,7 +133,7 @@ df.to.plot <- rbind(
 )
 ```
 
-```{r}
+```{r, fig.cap = "Prior Distributions of the Parameters"}
 # plot them
 ggplot(df.to.plot, aes(value)) +
   geom_density() +
@@ -485,7 +490,8 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
 mult.synth <- mult.synth.ETAS(ht = NULL)
 ```
 
-```{r, eval = !file.exists('Dissertation.RData')}
+```{r, eval = FALSE}
+## To be deleted
 synth.imp <- function(n.cat = 20, n.samp = 3,
                       t1 = NULL, t2 = NULL){
 
@@ -535,7 +541,7 @@ synth.imp <- function(n.cat = 20, n.samp = 3,
 
 Fitting Models on the Synthetic Catalogues
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 hier_clu_samp <- function(syn = mult.synth, kmax = 30){
     
     # This function aims at performing hierarchical clustering
@@ -544,56 +550,80 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
     
     # Extract the number of events, the number of large events, as well as
     # the highest magnitude in each catalogue. 
-    # Store them into a data frame.
+    # Store them into a data frame, and rescale each column.
     multi.synth.cat.list.df <- syn$environ$multi.synth.cat.list.df
     syn.cat.info <- multi.synth.cat.list.df %>% length %>% seq_len %>% 
         lapply(\(i) multi.synth.cat.list.df[[i]][1, 5 : 7])
     synth.df <- do.call(rbind, syn.cat.info)
-    
-    ## 3d
-    
+    synth.df.rescaled <- do.call(cbind, synth.df %>% ncol %>% seq_len %>% 
+        lapply(\(x) (synth.df[, x] - min(synth.df[, x])) / 
+                (max(synth.df[, x]) - min(synth.df[, x])))) 
+    colnames(synth.df.rescaled) <- c('num_events_rescaled', 
+                                  'num_large_rescaled', 
+                                  'max_mag_rescaled')
+        
     # Calculate the agglomerative coefficients for different 
     # linkage methods, and select the method with the highest
     # agglomerative coefficient.
     link_m <- c('single', 'complete', 'average', 'ward')
     agg_coef <- link_m %>% 
-        sapply(\(i) (synth.df %>% agnes(method = i))$ac)
+        sapply(\(i) (synth.df.rescaled %>% agnes(method = i))$ac)
     method <- agg_coef %>% which.max %>% names
     method <- ifelse(!(method == 'ward'), method, 'ward.D2')
     
     # Determine the optimal number of clusters up to `kmax`.
-    opt_num <- clusGap(synth.df, FUN = hcut, 
+    opt_num <- clusGap(synth.df.rescaled, FUN = hcut, 
                         K.max = kmax, B = 20)$Tab[, 3] %>% which.max
     
     # Add a new column specifying the numbers of clusters.
-    synth.final <- synth.df %>% 
+    synth.final <- synth.df.rescaled %>% 
         cbind(
-            cluster = synth.df %>% 
+            cluster = synth.df.rescaled %>% 
                         dist(method = 'euclidean') %>% 
                         hclust(method = method) %>%
                         cutree(k = opt_num)
         )
     
-    # Select 1 sample from each cluster, and return the sample id.
-    categories <- as.factor(synth.final$cluster)
-    samp.id <- (categories %>% levels %>% length %>% seq_len %>%
+    # Plot a 3-dimensional scatter plot of the final data frame.
+    three_d_scatter <- plot_ly(x = synth.df[, 1], 
+                               y = synth.df[, 2], 
+                               z = synth.df[, 3], 
+                               type = 'scatter3d', mode = 'markers', 
+                               color = synth.final[, 4]) %>%
+        layout(scene = 
+                list(xaxis = list(title = 'Number of Events'),
+                 yaxis = list(title = 'Number of Large Events'),
+                 zaxis = list(title = 'Maximum Magnitudes')),
+               legend = 
+                list(title = list(text = 'Clusters')))
+    
+    # Discard catalogues having over 1600 events, since these might 
+    # make the models crash.
+    synth <- cbind(synth.df, synth.final[, 4])
+    colnames(synth)[4] <- 'clusters'
+    synth_1600 <- synth[synth$num_events <= 1600,]
+    
+    # Select 1 sample from each cluster.
+    categories <- as.factor(synth_1600$clusters)
+    samp.id <- ((categories %>% levels %>% as.numeric) %>%
         lapply(
-            \(i) (categories == levels(categories)[i]) %>% 
+            \(i) (synth_1600$clusters == i) %>% 
                 which %>% sample(1))) %>% unlist %>% sample
     
-    return(samp.id)
+    # Return the sample id and the 3D scatter plot.
+    return(tibble::lst(samp.id, three_d_scatter))
 }
 ```
 
-```{r, message = FALSE, warning = FALSE}
+```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
+sampid <- hier_clu_samp(mult.synth)$samp.id
 synth.model <- function(syn = mult.synth, 
-                        kmax = 30,
                         slice = seq(1, 5, by = 1)){
     
     Nevents <- syn$environ$Nevents
     Nlar <- syn$environ$Nlarge
     MaxMag <- syn$environ$MaxMag %>% round(2)
-    samp.id <- hier_clu_samp(syn, kmax)[slice]
+    samp.id <- sampid[slice]
     
     # we need to bing the synthetics with the observed catalogue 
     # for plotting
@@ -663,7 +693,7 @@ synth.model <- function(syn = mult.synth,
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
-mult.synth.fit <- lapply(seq_len(4), \(i) synth.model(syn = mult.synth,
+mult.synth.fit <- lapply(seq_len(5), \(i) synth.model(syn = mult.synth,
                             slice = seq(5 * (i - 1) + 1, 5 * i, by = 1)))
 ```
 
@@ -706,7 +736,7 @@ ECDF.interarrival <- function(j){
     return(ECDF.plot)
 }
 
-ecdf_interarrival <- lapply(seq_len(4), \(j) ECDF.interarrival(j))
+ecdf_interarrival <- lapply(seq_len(5), \(j) ECDF.interarrival(j))
 ```
 
 ```{r, include = FALSE}
