@@ -490,55 +490,6 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
 mult.synth <- mult.synth.ETAS(ht = NULL)
 ```
 
-```{r, eval = FALSE}
-## To be deleted
-synth.imp <- function(n.cat = 20, n.samp = 3,
-                      t1 = NULL, t2 = NULL){
-
-    samp_mag <- seq(4.5, 8, by = .1) %>% sample(n.samp) %>% sort
-    samp_Nlarge <- seq(1, 4, by = 1) %>% sample(n.samp) %>% sort
-    samp_mag_single <- median(samp_mag)
-    samp_N <- sum(samp_Nlarge)
-
-    samps1 <- n.samp %>%
-                seq_len %>%
-                lapply(\(i) rep(samp_mag[i], samp_Nlarge[i])) %>%
-                unlist
-
-    samps2 <- n.samp %>%
-                seq_len %>%
-                lapply(\(i) rep(samp_mag_single, samp_N)) %>%
-                unlist
-
-    # inherits the environment from function `ETAS`
-    envir <- etas$envir
-
-    # updates environments if specified by users
-    envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
-    envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
-
-    ##
-    t <- seq(envir$t1, envir$t2, by = .01) %>% sample(samp_N)
-
-    ##
-    ht1 <- data.frame(ts = t, magnitudes = samps1)
-    ht2 <- data.frame(ts = t, magnitudes = samps2)
-
-    mult.synth.imp1 <- mult.synth.ETAS(ht = ht1, n.cat = n.cat)
-    mult.synth.imp2 <- mult.synth.ETAS(ht = ht2, n.cat = n.cat)
-
-    mult.synth.imp <- tibble::lst(mult.synth.imp1, mult.synth.imp2)
-
-    # returns the whole environment
-    environ <- as.list(environment())
-    return(tibble::lst(envir))
-
-    return(environ)
-}
-
-# mult.synth.imp <- synth.imp()
-```
-
 Fitting Models on the Synthetic Catalogues
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
@@ -613,10 +564,15 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
     # Return the sample id and the 3D scatter plot.
     return(tibble::lst(samp.id, three_d_scatter))
 }
+hier_c <- hier_clu_samp(mult.synth)
+sampid <- hier_c$samp.id
+```
+
+```{r, fig.cap = "3D Dynamic Scatter Plot of the Clustered Catalogues"}
+hier_c$three_d_scatter
 ```
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
-sampid <- hier_clu_samp(mult.synth)$samp.id
 synth.model <- function(syn = mult.synth, 
                         slice = seq(1, 5, by = 1)){
     
@@ -699,7 +655,7 @@ mult.synth.fit <- lapply(seq_len(5), \(i) synth.model(syn = mult.synth,
 
 Analysis on the Behaviours of the Time-between-Events
 
-```{r, eval = !file.exists('Dissertation.RData')}
+```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 ECDF.interarrival <- function(j){
     
     samp.id <- mult.synth.fit[[j]]$environ$samp.id
@@ -714,7 +670,7 @@ ECDF.interarrival <- function(j){
         Catalogues = paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
               'Events, with', Nlar[samp.id[i]], 'Large Events, ',
               'and the Highest Magnitude is', 
-              MaxMag[samp.id[i]])
+              MaxMag[samp.id[i]] %>% round(2))
         )
     )
     
@@ -733,10 +689,63 @@ ECDF.interarrival <- function(j){
         xlab('Time between Events') +
       ylab('Empirical Cumulative Probability')
     
-    return(ECDF.plot)
+    KS.plot <- samp.id %>% length %>% seq_len %>% lapply(
+        \(i) data.list[[i]]$Time_between_events %>% 
+            inla.ks.plot(
+                data.list[[samp.id %>% length + 1]]$Time_between_events %>%
+                             ecdf))
+    
+    return(tibble::lst(ECDF.plot, KS.plot))
 }
 
 ecdf_interarrival <- lapply(seq_len(5), \(j) ECDF.interarrival(j))
+```
+
+```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
+ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
+    
+    mult.synth.imp <- mult.synth.ETAS(n.cat = n.cat, 
+                                      ht = data[which.max(data$magnitudes),])
+    
+    Nevents <- mult.synth.imp$environ$Nevents
+    Nlar <- mult.synth.imp$environ$Nlar
+    MaxMag <- mult.synth.imp$environ$MaxMag
+    
+    data.list <- lapply(n.cat %>% seq_len, \(i) data.frame(
+        Time_between_events = 
+            mult.synth.imp$environ$multi.synth.cat.list.df[[i]]$ts %>%
+                sort %>% diff, 
+        Catalogues = paste('Random Catalogue', i, ':', Nevents[i],
+              'Events, with', Nlar[i], 'Large Events, ',
+              'and the Highest Magnitude is', 
+              MaxMag[i] %>% round(2))
+        )
+    )
+    
+    data.list[[n.cat + 1]] <- data.frame(
+        Time_between_events = etas$envir$interarrival, 
+        Catalogues = paste('Observed', ':', nrow(etas$envir$data),
+              'Events, with', etas$envir$Nlarge, 'Large Events, ',
+              'and the Highest Magnitude is', 
+              max(etas$envir$data$magnitudes) %>% round(2)))
+    
+    df <- do.call(rbind, data.list)
+    
+    ECDF.plot <- ggplot(df, aes(x = Time_between_events, 
+                                colour = Catalogues)) +
+        stat_ecdf() + 
+        xlab('Time between Events') +
+      ylab('Empirical Cumulative Probability')
+    
+    KS.plot <- n.cat %>% seq_len %>% lapply(
+        \(i) data.list[[i]]$Time_between_events %>% 
+            inla.ks.plot(data.list[[n.cat + 1]]$Time_between_events %>%
+                             ecdf))
+    
+    return(tibble::lst(ECDF.plot, KS.plot))
+}
+
+ecdf_interarrival_imp <- ECDF.interarrival.imp()
 ```
 
 ```{r, include = FALSE}
