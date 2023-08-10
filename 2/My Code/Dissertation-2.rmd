@@ -5,7 +5,9 @@ author: "Robin Lin s2435943"
 date: "today"
 date-format: "MMMM YYYY"
 format: 
-  pdf:
+  html:
+  # pdf:
+    # classoption: landscape
     page-layout: full
     code-line-numbers: true
 editor: visual
@@ -13,6 +15,8 @@ highlight-style: atom-one
 ---
 
 ```{r setup, include = FALSE, message = FALSE, warning = FALSE}
+# Install necessary packages, and load the data file if it exists.
+
 if(!require(tidyverse)){
     install.packages('tidyverse')
 }
@@ -54,13 +58,17 @@ if(!require(cluster)){
 }
 
 if(!require(plotly)){
-    instal.packages('plotly')
+    install.packages('plotly')
 }
 
 if(file.exists('Dissertation.RData')){
     load('Dissertation.RData')
 }
 ```
+
+## Setting Up
+
+Load packages, and set the number of cores.
 
 ```{r, message = FALSE, warning = FALSE}
 require(tidyverse)
@@ -86,7 +94,9 @@ future::plan(future::multisession, workers = num.cores)
 INLA::inla.setOption(num.threads = num.cores)
 ```
 
-Copula transformation of the priors
+## Prior Distributions
+
+Copula transformations and inverse copula transformations are set.
 
 ```{r, eval = !file.exists('Dissertation.RData')}
 # set copula transformations list
@@ -107,6 +117,8 @@ inv.link.f <- list(
   p = \(x) inv_unif_t(x, 1, 10)
 )
 ```
+
+The prior distributions are sketched as follows.
 
 ```{r, eval = !file.exists('Dissertation.RData')}
 # obtain sample from standard normal distribution
@@ -359,6 +371,10 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
 etas <- ETAS()
 ```
 
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence"}
+etas$envir$pairplot
+```
+
 Effect of mis-specifying parameters
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
@@ -423,6 +439,31 @@ etas_mis_c <- ETAS(Link.f = cop_mis_c$environ$linkf,
                    Bru.opt.list = cop_mis_c$environ$bruoptlist)
 etas_mis_p <- ETAS(Link.f = cop_mis_p$environ$linkf, 
                    Bru.opt.list = cop_mis_p$environ$bruoptlist)
+```
+
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with μ Mis-specified"}
+# Mis-specifying μ 
+etas_mis_mu$envir$pairplot
+```
+
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with K Mis-specified"}
+# Mis-specifying K
+etas_mis_K$envir$pairplot
+```
+
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with α Mis-specified"}
+# Mis-specifying α
+etas_mis_alp$envir$pairplot
+```
+
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with c Mis-specified"}
+# Mis-specifying c
+etas_mis_c$envir$pairplot
+```
+
+```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with p Mis-specified"}
+# Mis-specifying p
+etas_mis_p$envir$pairplot
 ```
 
 Synthetic catalogues generation
@@ -568,8 +609,16 @@ hier_c <- hier_clu_samp(mult.synth)
 sampid <- hier_c$samp.id
 ```
 
-```{r, fig.cap = "3D Dynamic Scatter Plot of the Clustered Catalogues"}
+Run this chunk in `Rmarkdown` to get the 3D interactive scatter plot of the clustered catalogues.
+
+```{r, eval = FALSE}
 hier_c$three_d_scatter
+```
+
+3D Scatter Plot (static) of the Clustered Catalogues
+
+```{r, eval = file.exists('cluster3d.png'), fig.cap = "3D Scatter Plot of the Clustered Catalogues"}
+knitr::include_graphics('cluster3d.png')
 ```
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
@@ -620,8 +669,8 @@ synth.model <- function(syn = mult.synth,
         post.par[i,] <- multi.synth.etas$envir$post.par
         
         post[[i]]$post.df$Catalogues <- 
-        paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+        paste('Random Catalogue', i, ':\n', Nevents[samp.id[i]],
+              'Events, with', Nlar[samp.id[i]], 'Large Events,\n',
               'and the Highest Magnitude is', MaxMag[samp.id[i]])
     }
     
@@ -653,6 +702,22 @@ mult.synth.fit <- lapply(seq_len(5), \(i) synth.model(syn = mult.synth,
                             slice = seq(5 * (i - 1) + 1, 5 * i, by = 1)))
 ```
 
+```{r, fig.cap = "Synthetic Catalogues, Time vs Magnitudes"}
+mult.synth.fit[[1]]$environ$multi.synth.cat.plot
+mult.synth.fit[[2]]$environ$multi.synth.cat.plot
+mult.synth.fit[[3]]$environ$multi.synth.cat.plot
+mult.synth.fit[[4]]$environ$multi.synth.cat.plot
+mult.synth.fit[[5]]$environ$multi.synth.cat.plot
+```
+
+```{r, fig.cap = "Posterior Plots for Parameters of Random Synthetic Catalogues"}
+mult.synth.fit[[1]]$environ$post.par.plot
+mult.synth.fit[[2]]$environ$post.par.plot
+mult.synth.fit[[3]]$environ$post.par.plot
+mult.synth.fit[[4]]$environ$post.par.plot
+mult.synth.fit[[5]]$environ$post.par.plot
+```
+
 Analysis on the Behaviours of the Time-between-Events
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
@@ -667,8 +732,9 @@ ECDF.interarrival <- function(j){
         Time_between_events = 
             mult.synth$environ$multi.synth.cat.list.df[[samp.id[i]]]$ts %>%
                 sort %>% diff, 
-        Catalogues = paste('Random Catalogue', i, ':', Nevents[samp.id[i]],
-              'Events, with', Nlar[samp.id[i]], 'Large Events, ',
+        Catalogues = paste('Random Catalogue', i, ':\n', 
+                           Nevents[samp.id[i]],
+              'Events, with', Nlar[samp.id[i]], 'Large Events,\n',
               'and the Highest Magnitude is', 
               MaxMag[samp.id[i]] %>% round(2))
         )
@@ -676,8 +742,8 @@ ECDF.interarrival <- function(j){
     
     data.list[[length(samp.id) + 1]] <- data.frame(
         Time_between_events = etas$envir$interarrival, 
-        Catalogues = paste('Observed', ':', nrow(etas$envir$data),
-              'Events, with', etas$envir$Nlarge, 'Large Events, ',
+        Catalogues = paste('Observed', ':\n', nrow(etas$envir$data),
+              'Events, with', etas$envir$Nlarge, 'Large Events,\n',
               'and the Highest Magnitude is', 
               max(etas$envir$data$magnitudes) %>% round(2)))
     
@@ -715,8 +781,8 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
         Time_between_events = 
             mult.synth.imp$environ$multi.synth.cat.list.df[[i]]$ts %>%
                 sort %>% diff, 
-        Catalogues = paste('Random Catalogue', i, ':', Nevents[i],
-              'Events, with', Nlar[i], 'Large Events, ',
+        Catalogues = paste('Random Catalogue', i, ':\n', Nevents[i],
+              'Events, with', Nlar[i], 'Large Events,\n',
               'and the Highest Magnitude is', 
               MaxMag[i] %>% round(2))
         )
@@ -724,8 +790,8 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
     
     data.list[[n.cat + 1]] <- data.frame(
         Time_between_events = etas$envir$interarrival, 
-        Catalogues = paste('Observed', ':', nrow(etas$envir$data),
-              'Events, with', etas$envir$Nlarge, 'Large Events, ',
+        Catalogues = paste('Observed', ':\n', nrow(etas$envir$data),
+              'Events, with', etas$envir$Nlarge, 'Large Events,\n',
               'and the Highest Magnitude is', 
               max(etas$envir$data$magnitudes) %>% round(2)))
     
@@ -748,6 +814,7 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
 ecdf_interarrival_imp <- ECDF.interarrival.imp()
 ```
 
-```{r, include = FALSE}
+```{r, include = FALSE, eval = !file.exists('Dissertation.RData')}
+# Save the data file.
 save.image(file = 'Dissertation.RData')
 ```
