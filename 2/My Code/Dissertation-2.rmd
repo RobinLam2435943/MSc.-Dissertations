@@ -563,6 +563,11 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
     method <- agg_coef %>% which.max %>% names
     method <- ifelse(!(method == 'ward'), method, 'ward.D2')
     
+    # Plot the Dendrogram.
+    dendro <- synth.df.rescaled %>% 
+                        dist(method = 'euclidean') %>% 
+                        hclust(method = method) %>% as.dendrogram
+    
     # Determine the optimal number of clusters up to `kmax`.
     opt_num <- clusGap(synth.df.rescaled, FUN = hcut, 
                         K.max = kmax, B = 20)$Tab[, 3] %>% which.max
@@ -602,11 +607,17 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
             \(i) (synth_1600$clusters == i) %>% 
                 which %>% sample(1))) %>% unlist %>% sample
     
-    # Return the sample id and the 3D scatter plot.
-    return(tibble::lst(samp.id, three_d_scatter))
+    # Return the dendrogram, the 3D scatter plot, and the sample ids.
+    return(tibble::lst(dendro, three_d_scatter, samp.id))
 }
 hier_c <- hier_clu_samp(mult.synth)
 sampid <- hier_c$samp.id
+```
+
+Dendrogram of the Clustered Catalogues
+
+```{r, fig.cap = "Dendrogram of the Clustered Catalogues"}
+hier_c$dendro %>% plot(leaflab = 'none')
 ```
 
 Run this chunk in `Rmarkdown` to get the 3D interactive scatter plot of the clustered catalogues.
@@ -767,6 +778,18 @@ ECDF.interarrival <- function(j){
 ecdf_interarrival <- lapply(seq_len(5), \(j) ECDF.interarrival(j))
 ```
 
+```{r, fig.cap = "ECDF Plots of Time between Events, without Imposing History"}
+ecdf_interarrival[[1]]$ECDF.plot
+ecdf_interarrival[[2]]$ECDF.plot
+ecdf_interarrival[[3]]$ECDF.plot
+ecdf_interarrival[[4]]$ECDF.plot
+ecdf_interarrival[[5]]$ECDF.plot
+```
+
+```{r, eval = !file.exists('ks_org_best.png'), fig.cap = "An Example KS Plot of Time between Events, without Imposing History"}
+knitr::include_graphics('ks_org_best.png')
+```
+
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
     
@@ -812,6 +835,14 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
 }
 
 ecdf_interarrival_imp <- ECDF.interarrival.imp()
+```
+
+```{r, fig.cap = "ECDF Plots of Time between Events, Imposing History"}
+ecdf_interarrival_imp$ECDF.plot
+```
+
+```{r, eval = !file.exists('ks_imp_best.png'), fig.cap = "An Example KS Plot of Time between Events, Imposing History"}
+knitr::include_graphics('ks_imp_best.png')
 ```
 
 ```{r, include = FALSE, eval = !file.exists('Dissertation.RData')}
