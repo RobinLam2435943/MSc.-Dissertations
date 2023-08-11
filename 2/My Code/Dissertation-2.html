@@ -8,7 +8,7 @@
 
 <meta name="author" content="Robin Lin s2435943">
 
-<title>Earthquake Forecasting</title>
+<title>Mimicking L’Aquila: Capturing Key Components of the Earthquake Sequence</title>
 <style>
 code{white-space: pre-wrap;}
 span.smallcaps{font-variant: small-caps;}
@@ -98,6 +98,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <link href="Dissertation-2_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
 <link href="Dissertation-2_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
 
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
 
 </head>
 
@@ -109,8 +110,8 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 
 <header id="title-block-header" class="quarto-title-block default">
 <div class="quarto-title">
-<h1 class="title">Earthquake Forecasting</h1>
-<p class="subtitle lead">Dissertation Project 2</p>
+<h1 class="title">Mimicking L’Aquila: Capturing Key Components of the Earthquake Sequence</h1>
+<p class="subtitle lead">Dissertation Project 2, Supervised by Dr.&nbsp;Finn Lindgren and Dr.&nbsp;Daniel Paulin</p>
 </div>
 
 
@@ -166,9 +167,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </section>
 <section id="prior-distributions" class="level2">
 <h2 class="anchored" data-anchor-id="prior-distributions">Prior Distributions</h2>
-<p>Copula transformations and inverse copula transformations are set.</p>
+<p>Prior distributions of the parameters are set up based on copula transformations.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># set copula transformations list</span></span>
+<div class="sourceCode cell-code" id="cb2"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a><span class="co"># Copula transformations.</span></span>
 <span id="cb2-2"><a href="#cb2-2"></a>link.f <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb2-3"><a href="#cb2-3"></a>  <span class="at">mu =</span> \(x) <span class="fu">gamma_t</span>(x, .<span class="dv">3</span>, .<span class="dv">6</span>),</span>
 <span id="cb2-4"><a href="#cb2-4"></a>  <span class="at">K =</span> \(x) <span class="fu">unif_t</span>(x, <span class="dv">0</span>, <span class="dv">10</span>),</span>
@@ -177,7 +178,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-7"><a href="#cb2-7"></a>  <span class="at">p =</span> \(x) <span class="fu">unif_t</span>(x, <span class="dv">1</span>, <span class="dv">10</span>)</span>
 <span id="cb2-8"><a href="#cb2-8"></a>)</span>
 <span id="cb2-9"><a href="#cb2-9"></a></span>
-<span id="cb2-10"><a href="#cb2-10"></a><span class="co"># set inverse copula transformations list</span></span>
+<span id="cb2-10"><a href="#cb2-10"></a><span class="co"># Inverse copula transformations.</span></span>
 <span id="cb2-11"><a href="#cb2-11"></a>inv.link.f <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb2-12"><a href="#cb2-12"></a>  <span class="at">mu =</span> \(x) <span class="fu">inv_gamma_t</span>(x, .<span class="dv">3</span>, .<span class="dv">6</span>),</span>
 <span id="cb2-13"><a href="#cb2-13"></a>  <span class="at">K =</span> \(x) <span class="fu">inv_unif_t</span>(x, <span class="dv">0</span>, <span class="dv">10</span>),</span>
@@ -186,33 +187,34 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb2-16"><a href="#cb2-16"></a>  <span class="at">p =</span> \(x) <span class="fu">inv_unif_t</span>(x, <span class="dv">1</span>, <span class="dv">10</span>)</span>
 <span id="cb2-17"><a href="#cb2-17"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>The prior distributions are sketched as follows.</p>
+<p>The prior distributions are sketched.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># obtain sample from standard normal distribution</span></span>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a><span class="co"># Sample from standard normal distribution.</span></span>
 <span id="cb3-2"><a href="#cb3-2"></a>X <span class="ot">&lt;-</span> <span class="fu">rnorm</span>(<span class="dv">1000</span>)</span>
-<span id="cb3-3"><a href="#cb3-3"></a><span class="co"># apply copula transformations</span></span>
-<span id="cb3-4"><a href="#cb3-4"></a>gamma.X <span class="ot">&lt;-</span> <span class="fu">gamma_t</span>(X, .<span class="dv">3</span>, .<span class="dv">6</span>)</span>
-<span id="cb3-5"><a href="#cb3-5"></a>unif.X <span class="ot">&lt;-</span> <span class="fu">unif_t</span>(X, <span class="dv">0</span>, <span class="dv">10</span>)</span>
-<span id="cb3-6"><a href="#cb3-6"></a>unif.X<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">unif_t</span>(X, <span class="dv">1</span>, <span class="dv">10</span>)</span>
-<span id="cb3-7"><a href="#cb3-7"></a></span>
-<span id="cb3-8"><a href="#cb3-8"></a><span class="co"># build data.frame for plotting</span></span>
-<span id="cb3-9"><a href="#cb3-9"></a>df.to.plot <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
-<span id="cb3-10"><a href="#cb3-10"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb3-11"><a href="#cb3-11"></a>    <span class="at">value =</span> gamma.X,</span>
-<span id="cb3-12"><a href="#cb3-12"></a>    <span class="at">distribution =</span> <span class="st">"Gamma(0.3, 0.6)"</span></span>
-<span id="cb3-13"><a href="#cb3-13"></a>  ),</span>
-<span id="cb3-14"><a href="#cb3-14"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb3-15"><a href="#cb3-15"></a>    <span class="at">value =</span> unif.X,</span>
-<span id="cb3-16"><a href="#cb3-16"></a>    <span class="at">distribution =</span> <span class="st">"Uniform(0, 10)"</span></span>
-<span id="cb3-17"><a href="#cb3-17"></a>  ),</span>
-<span id="cb3-18"><a href="#cb3-18"></a>  <span class="fu">data.frame</span>(</span>
-<span id="cb3-19"><a href="#cb3-19"></a>    <span class="at">value =</span> unif.X<span class="fl">.2</span>,</span>
-<span id="cb3-20"><a href="#cb3-20"></a>    <span class="at">distribution =</span> <span class="st">"Uniform(1, 10)"</span></span>
-<span id="cb3-21"><a href="#cb3-21"></a>  )</span>
-<span id="cb3-22"><a href="#cb3-22"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb3-3"><a href="#cb3-3"></a></span>
+<span id="cb3-4"><a href="#cb3-4"></a><span class="co"># Copula transformations.</span></span>
+<span id="cb3-5"><a href="#cb3-5"></a>gamma.X <span class="ot">&lt;-</span> <span class="fu">gamma_t</span>(X, .<span class="dv">3</span>, .<span class="dv">6</span>)</span>
+<span id="cb3-6"><a href="#cb3-6"></a>unif.X <span class="ot">&lt;-</span> <span class="fu">unif_t</span>(X, <span class="dv">0</span>, <span class="dv">10</span>)</span>
+<span id="cb3-7"><a href="#cb3-7"></a>unif.X<span class="fl">.2</span> <span class="ot">&lt;-</span> <span class="fu">unif_t</span>(X, <span class="dv">1</span>, <span class="dv">10</span>)</span>
+<span id="cb3-8"><a href="#cb3-8"></a></span>
+<span id="cb3-9"><a href="#cb3-9"></a><span class="co"># Data frame for plotting.</span></span>
+<span id="cb3-10"><a href="#cb3-10"></a>df.to.plot <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb3-11"><a href="#cb3-11"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb3-12"><a href="#cb3-12"></a>    <span class="at">value =</span> gamma.X,</span>
+<span id="cb3-13"><a href="#cb3-13"></a>    <span class="at">distribution =</span> <span class="st">"Gamma(0.3, 0.6)"</span></span>
+<span id="cb3-14"><a href="#cb3-14"></a>  ),</span>
+<span id="cb3-15"><a href="#cb3-15"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb3-16"><a href="#cb3-16"></a>    <span class="at">value =</span> unif.X,</span>
+<span id="cb3-17"><a href="#cb3-17"></a>    <span class="at">distribution =</span> <span class="st">"Uniform(0, 10)"</span></span>
+<span id="cb3-18"><a href="#cb3-18"></a>  ),</span>
+<span id="cb3-19"><a href="#cb3-19"></a>  <span class="fu">data.frame</span>(</span>
+<span id="cb3-20"><a href="#cb3-20"></a>    <span class="at">value =</span> unif.X<span class="fl">.2</span>,</span>
+<span id="cb3-21"><a href="#cb3-21"></a>    <span class="at">distribution =</span> <span class="st">"Uniform(1, 10)"</span></span>
+<span id="cb3-22"><a href="#cb3-22"></a>  )</span>
+<span id="cb3-23"><a href="#cb3-23"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># plot them</span></span>
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1"></a><span class="co"># Plot the priors.</span></span>
 <span id="cb4-2"><a href="#cb4-2"></a><span class="fu">ggplot</span>(df.to.plot, <span class="fu">aes</span>(value)) <span class="sc">+</span></span>
 <span id="cb4-3"><a href="#cb4-3"></a>  <span class="fu">geom_density</span>() <span class="sc">+</span></span>
 <span id="cb4-4"><a href="#cb4-4"></a>  <span class="fu">theme_bw</span>() <span class="sc">+</span></span>
@@ -226,42 +228,40 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
-<p>Italy</p>
+</section>
+<section id="horus-data-and-laquila-sequence" class="level2">
+<h2 class="anchored" data-anchor-id="horus-data-and-laquila-sequence">HORUS Data and L’Aquila Sequence</h2>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># transform time string in Date object</span></span>
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1"></a><span class="co"># Transform HORUS time string in `Date` object, using `UTC` time zone.</span></span>
 <span id="cb5-2"><a href="#cb5-2"></a>horus<span class="sc">$</span>time_date <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(</span>
 <span id="cb5-3"><a href="#cb5-3"></a>  horus<span class="sc">$</span>time_string,</span>
 <span id="cb5-4"><a href="#cb5-4"></a>  <span class="at">format =</span> <span class="st">"%Y-%m-%dT%H:%M:%OS"</span>,</span>
 <span id="cb5-5"><a href="#cb5-5"></a>  <span class="at">tz =</span> <span class="st">"UTC"</span></span>
 <span id="cb5-6"><a href="#cb5-6"></a>)</span>
-<span id="cb5-7"><a href="#cb5-7"></a><span class="co"># There may be some incorrectly registered data-times in the original data set,</span></span>
-<span id="cb5-8"><a href="#cb5-8"></a><span class="co"># that as.POSIXct() can't convert, depending on the system.</span></span>
-<span id="cb5-9"><a href="#cb5-9"></a><span class="co"># These should ideally be corrected, but for now, we just remove the rows that</span></span>
-<span id="cb5-10"><a href="#cb5-10"></a><span class="co"># couldn't be converted.</span></span>
-<span id="cb5-11"><a href="#cb5-11"></a><span class="co"># horus &lt;- na.omit(horus)</span></span>
-<span id="cb5-12"><a href="#cb5-12"></a></span>
-<span id="cb5-13"><a href="#cb5-13"></a><span class="co"># set up parameters for selection</span></span>
-<span id="cb5-14"><a href="#cb5-14"></a>start.date <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">"2009-01-01T00:00:00"</span>, </span>
-<span id="cb5-15"><a href="#cb5-15"></a>                         <span class="at">format =</span> <span class="st">"%Y-%m-%dT%H:%M:%OS"</span>)</span>
-<span id="cb5-16"><a href="#cb5-16"></a>end.date <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">"2010-01-01T00:00:00"</span>, <span class="at">format =</span> <span class="st">"%Y-%m-%dT%H:%M:%OS"</span>)</span>
-<span id="cb5-17"><a href="#cb5-17"></a>min.longitude <span class="ot">&lt;-</span> <span class="fl">10.5</span></span>
-<span id="cb5-18"><a href="#cb5-18"></a>max.longitude <span class="ot">&lt;-</span> <span class="dv">16</span></span>
-<span id="cb5-19"><a href="#cb5-19"></a>min.latitude <span class="ot">&lt;-</span> <span class="fl">40.5</span></span>
-<span id="cb5-20"><a href="#cb5-20"></a>max.latitude <span class="ot">&lt;-</span> <span class="dv">45</span></span>
-<span id="cb5-21"><a href="#cb5-21"></a>M0 <span class="ot">&lt;-</span> <span class="fl">2.5</span></span>
-<span id="cb5-22"><a href="#cb5-22"></a></span>
-<span id="cb5-23"><a href="#cb5-23"></a><span class="co"># set up conditions for selection</span></span>
-<span id="cb5-24"><a href="#cb5-24"></a>aquila.sel <span class="ot">&lt;-</span> (horus<span class="sc">$</span>time_date <span class="sc">&gt;=</span> start.date) <span class="sc">&amp;</span></span>
-<span id="cb5-25"><a href="#cb5-25"></a>  (horus<span class="sc">$</span>time_date <span class="sc">&lt;</span> end.date) <span class="sc">&amp;</span></span>
-<span id="cb5-26"><a href="#cb5-26"></a>  (horus<span class="sc">$</span>lon <span class="sc">&gt;=</span> min.longitude) <span class="sc">&amp;</span></span>
-<span id="cb5-27"><a href="#cb5-27"></a>  (horus<span class="sc">$</span>lon <span class="sc">&lt;=</span> max.longitude) <span class="sc">&amp;</span></span>
-<span id="cb5-28"><a href="#cb5-28"></a>  (horus<span class="sc">$</span>lat <span class="sc">&gt;=</span> min.latitude) <span class="sc">&amp;</span></span>
-<span id="cb5-29"><a href="#cb5-29"></a>  (horus<span class="sc">$</span>lat <span class="sc">&lt;=</span> max.latitude) <span class="sc">&amp;</span></span>
-<span id="cb5-30"><a href="#cb5-30"></a>  (horus<span class="sc">$</span>M <span class="sc">&gt;=</span> M0)</span>
-<span id="cb5-31"><a href="#cb5-31"></a></span>
-<span id="cb5-32"><a href="#cb5-32"></a><span class="co"># select</span></span>
-<span id="cb5-33"><a href="#cb5-33"></a>aquila <span class="ot">&lt;-</span> horus[aquila.sel, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb5-7"><a href="#cb5-7"></a></span>
+<span id="cb5-8"><a href="#cb5-8"></a><span class="co"># Extract the L'Aquila sequence.</span></span>
+<span id="cb5-9"><a href="#cb5-9"></a>start.date <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">"2009-01-01T00:00:00"</span>, </span>
+<span id="cb5-10"><a href="#cb5-10"></a>                         <span class="at">format =</span> <span class="st">"%Y-%m-%dT%H:%M:%OS"</span>)</span>
+<span id="cb5-11"><a href="#cb5-11"></a>end.date <span class="ot">&lt;-</span> <span class="fu">as.POSIXct</span>(<span class="st">"2010-01-01T00:00:00"</span>, <span class="at">format =</span> <span class="st">"%Y-%m-%dT%H:%M:%OS"</span>)</span>
+<span id="cb5-12"><a href="#cb5-12"></a>min.longitude <span class="ot">&lt;-</span> <span class="fl">10.5</span></span>
+<span id="cb5-13"><a href="#cb5-13"></a>max.longitude <span class="ot">&lt;-</span> <span class="dv">16</span></span>
+<span id="cb5-14"><a href="#cb5-14"></a>min.latitude <span class="ot">&lt;-</span> <span class="fl">40.5</span></span>
+<span id="cb5-15"><a href="#cb5-15"></a>max.latitude <span class="ot">&lt;-</span> <span class="dv">45</span></span>
+<span id="cb5-16"><a href="#cb5-16"></a>M0 <span class="ot">&lt;-</span> <span class="fl">2.5</span> <span class="co"># Magnitude Cutoff.</span></span>
+<span id="cb5-17"><a href="#cb5-17"></a></span>
+<span id="cb5-18"><a href="#cb5-18"></a><span class="co"># Conditions of selection.</span></span>
+<span id="cb5-19"><a href="#cb5-19"></a>aquila.sel <span class="ot">&lt;-</span> (horus<span class="sc">$</span>time_date <span class="sc">&gt;=</span> start.date) <span class="sc">&amp;</span></span>
+<span id="cb5-20"><a href="#cb5-20"></a>  (horus<span class="sc">$</span>time_date <span class="sc">&lt;</span> end.date) <span class="sc">&amp;</span></span>
+<span id="cb5-21"><a href="#cb5-21"></a>  (horus<span class="sc">$</span>lon <span class="sc">&gt;=</span> min.longitude) <span class="sc">&amp;</span></span>
+<span id="cb5-22"><a href="#cb5-22"></a>  (horus<span class="sc">$</span>lon <span class="sc">&lt;=</span> max.longitude) <span class="sc">&amp;</span></span>
+<span id="cb5-23"><a href="#cb5-23"></a>  (horus<span class="sc">$</span>lat <span class="sc">&gt;=</span> min.latitude) <span class="sc">&amp;</span></span>
+<span id="cb5-24"><a href="#cb5-24"></a>  (horus<span class="sc">$</span>lat <span class="sc">&lt;=</span> max.latitude) <span class="sc">&amp;</span></span>
+<span id="cb5-25"><a href="#cb5-25"></a>  (horus<span class="sc">$</span>M <span class="sc">&gt;=</span> M0)</span>
+<span id="cb5-26"><a href="#cb5-26"></a></span>
+<span id="cb5-27"><a href="#cb5-27"></a><span class="co"># L'Aquila sequence.</span></span>
+<span id="cb5-28"><a href="#cb5-28"></a>aquila <span class="ot">&lt;-</span> horus[aquila.sel, ]</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Plot the map showing earthquake in Italy in 2009. Magnitudes: 3-5(black dots), 5-6(orange dots), <span class="math inline">\(\geq 6\)</span>(red dot)</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb6"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1"></a>italy.map <span class="ot">&lt;-</span> <span class="fu">ne_countries</span>(<span class="at">country =</span> <span class="st">'Italy'</span>, <span class="at">returnclass =</span> <span class="st">"sf"</span>, </span>
 <span id="cb6-2"><a href="#cb6-2"></a>                          <span class="at">scale =</span> <span class="st">'medium'</span>)</span>
@@ -282,11 +282,12 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Dissertation-2_files/figure-html/unnamed-chunk-7-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Italian earthquakes in 2009</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Italian Earthquakes in 2009</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
+<p>L’Aquila sequence, time versus magnitudes.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb8"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1"></a><span class="fu">ggplot</span>(aquila, <span class="fu">aes</span>(time_date, M)) <span class="sc">+</span></span>
 <span id="cb8-2"><a href="#cb8-2"></a>  <span class="fu">geom_point</span>() <span class="sc">+</span></span>
@@ -295,13 +296,17 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Dissertation-2_files/figure-html/unnamed-chunk-8-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">L’Aquila seismic sequence, times versus magnitudes</figcaption><p></p>
+<p></p><figcaption class="figure-caption">L’Aquila Seismic Sequence, times versus magnitudes</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
+</section>
+<section id="other-setups-before-modelling" class="level2">
+<h2 class="anchored" data-anchor-id="other-setups-before-modelling">Other Setups before Modelling</h2>
+<p>L’Aquila data frame.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># set up data.frame for model fitting</span></span>
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1"></a><span class="co"># Data frame of L'Aquila.</span></span>
 <span id="cb9-2"><a href="#cb9-2"></a>aquila.bru <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
 <span id="cb9-3"><a href="#cb9-3"></a>  <span class="at">ts =</span> <span class="fu">as.numeric</span>(</span>
 <span id="cb9-4"><a href="#cb9-4"></a>    <span class="fu">difftime</span>(aquila<span class="sc">$</span>time_date, start.date, <span class="at">units =</span> <span class="st">"days"</span>)</span>
@@ -310,8 +315,9 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb9-7"><a href="#cb9-7"></a>  <span class="at">idx.p =</span> <span class="dv">1</span> <span class="sc">:</span> <span class="fu">nrow</span>(aquila)</span>
 <span id="cb9-8"><a href="#cb9-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Initial values.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="co"># set up list of initial values</span></span>
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1"></a><span class="co"># Initial values.</span></span>
 <span id="cb10-2"><a href="#cb10-2"></a>th.init <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
 <span id="cb10-3"><a href="#cb10-3"></a>  <span class="at">th.mu =</span> inv.link.f<span class="sc">$</span><span class="fu">mu</span>(.<span class="dv">5</span>),</span>
 <span id="cb10-4"><a href="#cb10-4"></a>  <span class="at">th.K =</span> inv.link.f<span class="sc">$</span><span class="fu">K</span>(.<span class="dv">1</span>),</span>
@@ -320,22 +326,25 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb10-7"><a href="#cb10-7"></a>  <span class="at">th.p =</span> inv.link.f<span class="sc">$</span><span class="fu">p</span>(<span class="fl">1.1</span>)</span>
 <span id="cb10-8"><a href="#cb10-8"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Start and end time points.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># set starting and time of the time interval used for model fitting. </span></span>
+<div class="sourceCode cell-code" id="cb11"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1"></a><span class="co"># Set starting and time of the time interval used for model fitting. </span></span>
 <span id="cb11-2"><a href="#cb11-2"></a><span class="co"># In this case, we use the interval covered by the data.</span></span>
 <span id="cb11-3"><a href="#cb11-3"></a>T1 <span class="ot">&lt;-</span> <span class="dv">0</span></span>
-<span id="cb11-4"><a href="#cb11-4"></a>T2 <span class="ot">&lt;-</span> <span class="fu">max</span>(aquila.bru<span class="sc">$</span>ts) <span class="sc">+</span> .<span class="dv">2</span> <span class="co"># Use max(..., na.rm = TRUE) if there may </span></span>
-<span id="cb11-5"><a href="#cb11-5"></a><span class="co"># still be NAs here</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb11-4"><a href="#cb11-4"></a>T2 <span class="ot">&lt;-</span> <span class="fu">max</span>(aquila.bru<span class="sc">$</span>ts) <span class="sc">+</span> .<span class="dv">2</span> </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Bru options.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co"># set up list of bru options</span></span>
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1"></a><span class="co"># Set up list of bru options.</span></span>
 <span id="cb12-2"><a href="#cb12-2"></a>bru.opt.list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb12-3"><a href="#cb12-3"></a>  <span class="at">bru_verbose =</span> <span class="dv">3</span>, <span class="co"># type of visual output</span></span>
-<span id="cb12-4"><a href="#cb12-4"></a>  <span class="at">bru_max_iter =</span> <span class="dv">70</span>, <span class="co"># maximum number of iterations</span></span>
-<span id="cb12-5"><a href="#cb12-5"></a>  <span class="co"># bru_method = list(max_step = 0.5),</span></span>
-<span id="cb12-6"><a href="#cb12-6"></a>  <span class="at">bru_initial =</span> th.init <span class="co"># parameters' initial values</span></span>
-<span id="cb12-7"><a href="#cb12-7"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb12-3"><a href="#cb12-3"></a>  <span class="at">bru_verbose =</span> <span class="dv">3</span>, <span class="co"># Type of visual output.</span></span>
+<span id="cb12-4"><a href="#cb12-4"></a>  <span class="at">bru_max_iter =</span> <span class="dv">70</span>, <span class="co"># Maximum number of iterations.</span></span>
+<span id="cb12-5"><a href="#cb12-5"></a>  <span class="at">bru_initial =</span> th.init <span class="co"># Initial values.</span></span>
+<span id="cb12-6"><a href="#cb12-6"></a>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+</section>
+<section id="etas-model" class="level2">
+<h2 class="anchored" data-anchor-id="etas-model">ETAS Model</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb13"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1"></a>ETAS <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">data =</span> aquila.bru, <span class="at">m0 =</span> M0, <span class="at">t1 =</span> T1, <span class="at">t2 =</span> T2, </span>
 <span id="cb13-2"><a href="#cb13-2"></a>                 <span class="at">ncore =</span> num.cores, <span class="at">Link.f =</span> link.f,</span>
@@ -344,124 +353,130 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb13-5"><a href="#cb13-5"></a>                 <span class="at">t.end.tri.post =</span> <span class="dv">5</span>, <span class="at">t.end.tri.prior =</span> <span class="dv">10</span>, </span>
 <span id="cb13-6"><a href="#cb13-6"></a>                 <span class="at">t.end.omori.post =</span> <span class="dv">5</span>, <span class="at">t.end.omori.prior =</span> <span class="dv">5</span>){</span>
 <span id="cb13-7"><a href="#cb13-7"></a>    </span>
-<span id="cb13-8"><a href="#cb13-8"></a>    <span class="co"># maximum likelihood estimator for beta</span></span>
-<span id="cb13-9"><a href="#cb13-9"></a>    beta.p <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="fu">mean</span>(data<span class="sc">$</span>magnitudes) <span class="sc">-</span> m0)</span>
+<span id="cb13-8"><a href="#cb13-8"></a>    <span class="co"># This function aims at constructing the ETAS model, and returns a list of</span></span>
+<span id="cb13-9"><a href="#cb13-9"></a>    <span class="co"># modelling information.</span></span>
 <span id="cb13-10"><a href="#cb13-10"></a>    </span>
-<span id="cb13-11"><a href="#cb13-11"></a>    <span class="co"># fit the model</span></span>
-<span id="cb13-12"><a href="#cb13-12"></a>    model.fit <span class="ot">&lt;-</span> <span class="fu">Temporal.ETAS</span>(</span>
-<span id="cb13-13"><a href="#cb13-13"></a>      <span class="at">total.data =</span> data,</span>
-<span id="cb13-14"><a href="#cb13-14"></a>      <span class="at">M0 =</span> m0,</span>
-<span id="cb13-15"><a href="#cb13-15"></a>      <span class="at">T1 =</span> t1,</span>
-<span id="cb13-16"><a href="#cb13-16"></a>      <span class="at">T2 =</span> t2,</span>
-<span id="cb13-17"><a href="#cb13-17"></a>      <span class="at">link.functions =</span> Link.f,</span>
-<span id="cb13-18"><a href="#cb13-18"></a>      <span class="at">coef.t. =</span> <span class="dv">1</span>,</span>
-<span id="cb13-19"><a href="#cb13-19"></a>      <span class="at">delta.t. =</span> .<span class="dv">1</span>,</span>
-<span id="cb13-20"><a href="#cb13-20"></a>      <span class="at">N.max. =</span> <span class="dv">5</span>,</span>
-<span id="cb13-21"><a href="#cb13-21"></a>      <span class="at">bru.opt =</span> Bru.opt.list</span>
-<span id="cb13-22"><a href="#cb13-22"></a>    )</span>
-<span id="cb13-23"><a href="#cb13-23"></a>    </span>
-<span id="cb13-24"><a href="#cb13-24"></a>    <span class="co"># create input list to explore model output</span></span>
-<span id="cb13-25"><a href="#cb13-25"></a>    input_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb13-26"><a href="#cb13-26"></a>      <span class="at">model.fit =</span> model.fit,</span>
-<span id="cb13-27"><a href="#cb13-27"></a>      <span class="at">link.functions =</span> Link.f</span>
-<span id="cb13-28"><a href="#cb13-28"></a>    )</span>
-<span id="cb13-29"><a href="#cb13-29"></a>    </span>
-<span id="cb13-30"><a href="#cb13-30"></a>    <span class="co"># get marginal posterior information</span></span>
-<span id="cb13-31"><a href="#cb13-31"></a>    post.list <span class="ot">&lt;-</span> <span class="fu">get_posterior_param</span>(<span class="at">input.list =</span> input_list)</span>
+<span id="cb13-11"><a href="#cb13-11"></a>    <span class="co"># Maximum likelihood estimator for β.</span></span>
+<span id="cb13-12"><a href="#cb13-12"></a>    beta.p <span class="ot">&lt;-</span> <span class="dv">1</span> <span class="sc">/</span> (<span class="fu">mean</span>(data<span class="sc">$</span>magnitudes) <span class="sc">-</span> m0)</span>
+<span id="cb13-13"><a href="#cb13-13"></a>    </span>
+<span id="cb13-14"><a href="#cb13-14"></a>    <span class="co"># Fit the model</span></span>
+<span id="cb13-15"><a href="#cb13-15"></a>    model.fit <span class="ot">&lt;-</span> <span class="fu">Temporal.ETAS</span>(</span>
+<span id="cb13-16"><a href="#cb13-16"></a>      <span class="at">total.data =</span> data,</span>
+<span id="cb13-17"><a href="#cb13-17"></a>      <span class="at">M0 =</span> m0,</span>
+<span id="cb13-18"><a href="#cb13-18"></a>      <span class="at">T1 =</span> t1,</span>
+<span id="cb13-19"><a href="#cb13-19"></a>      <span class="at">T2 =</span> t2,</span>
+<span id="cb13-20"><a href="#cb13-20"></a>      <span class="at">link.functions =</span> Link.f,</span>
+<span id="cb13-21"><a href="#cb13-21"></a>      <span class="at">coef.t. =</span> <span class="dv">1</span>,</span>
+<span id="cb13-22"><a href="#cb13-22"></a>      <span class="at">delta.t. =</span> .<span class="dv">1</span>,</span>
+<span id="cb13-23"><a href="#cb13-23"></a>      <span class="at">N.max. =</span> <span class="dv">5</span>,</span>
+<span id="cb13-24"><a href="#cb13-24"></a>      <span class="at">bru.opt =</span> Bru.opt.list</span>
+<span id="cb13-25"><a href="#cb13-25"></a>    )</span>
+<span id="cb13-26"><a href="#cb13-26"></a>    </span>
+<span id="cb13-27"><a href="#cb13-27"></a>    <span class="co"># Create input list to explore model output.</span></span>
+<span id="cb13-28"><a href="#cb13-28"></a>    input_list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb13-29"><a href="#cb13-29"></a>      <span class="at">model.fit =</span> model.fit,</span>
+<span id="cb13-30"><a href="#cb13-30"></a>      <span class="at">link.functions =</span> Link.f</span>
+<span id="cb13-31"><a href="#cb13-31"></a>    )</span>
 <span id="cb13-32"><a href="#cb13-32"></a>    </span>
-<span id="cb13-33"><a href="#cb13-33"></a>    <span class="co"># plot marginal posteriors</span></span>
-<span id="cb13-34"><a href="#cb13-34"></a>    postplot <span class="ot">&lt;-</span> post.list<span class="sc">$</span>post.plot</span>
+<span id="cb13-33"><a href="#cb13-33"></a>    <span class="co"># Get marginal posterior information.</span></span>
+<span id="cb13-34"><a href="#cb13-34"></a>    post.list <span class="ot">&lt;-</span> <span class="fu">get_posterior_param</span>(<span class="at">input.list =</span> input_list)</span>
 <span id="cb13-35"><a href="#cb13-35"></a>    </span>
-<span id="cb13-36"><a href="#cb13-36"></a>    <span class="co"># posterior sampling</span></span>
-<span id="cb13-37"><a href="#cb13-37"></a>    post.samp <span class="ot">&lt;-</span> <span class="fu">post_sampling</span>(</span>
-<span id="cb13-38"><a href="#cb13-38"></a>      <span class="at">input.list =</span> input_list,</span>
-<span id="cb13-39"><a href="#cb13-39"></a>      <span class="at">n.samp =</span> n.samp,</span>
-<span id="cb13-40"><a href="#cb13-40"></a>      <span class="at">max.batch =</span> max.batch,</span>
-<span id="cb13-41"><a href="#cb13-41"></a>      <span class="at">ncore =</span> num.cores</span>
-<span id="cb13-42"><a href="#cb13-42"></a>    )</span>
-<span id="cb13-43"><a href="#cb13-43"></a>    </span>
-<span id="cb13-44"><a href="#cb13-44"></a>    <span class="co"># taking the averages of the posterior parameter estimates</span></span>
-<span id="cb13-45"><a href="#cb13-45"></a>    post.par <span class="ot">&lt;-</span> <span class="fu">apply</span>(post.samp, <span class="dv">2</span>, mean)</span>
+<span id="cb13-36"><a href="#cb13-36"></a>    <span class="co"># Plot marginal posteriors.</span></span>
+<span id="cb13-37"><a href="#cb13-37"></a>    postplot <span class="ot">&lt;-</span> post.list<span class="sc">$</span>post.plot</span>
+<span id="cb13-38"><a href="#cb13-38"></a>    </span>
+<span id="cb13-39"><a href="#cb13-39"></a>    <span class="co"># Posterior sampling.</span></span>
+<span id="cb13-40"><a href="#cb13-40"></a>    post.samp <span class="ot">&lt;-</span> <span class="fu">post_sampling</span>(</span>
+<span id="cb13-41"><a href="#cb13-41"></a>      <span class="at">input.list =</span> input_list,</span>
+<span id="cb13-42"><a href="#cb13-42"></a>      <span class="at">n.samp =</span> n.samp,</span>
+<span id="cb13-43"><a href="#cb13-43"></a>      <span class="at">max.batch =</span> max.batch,</span>
+<span id="cb13-44"><a href="#cb13-44"></a>      <span class="at">ncore =</span> num.cores</span>
+<span id="cb13-45"><a href="#cb13-45"></a>    )</span>
 <span id="cb13-46"><a href="#cb13-46"></a>    </span>
-<span id="cb13-47"><a href="#cb13-47"></a>    <span class="co"># pair plot</span></span>
-<span id="cb13-48"><a href="#cb13-48"></a>    pair.plot <span class="ot">&lt;-</span> <span class="fu">post_pairs_plot</span>(</span>
-<span id="cb13-49"><a href="#cb13-49"></a>      <span class="at">post.samp =</span> post.samp,</span>
-<span id="cb13-50"><a href="#cb13-50"></a>      <span class="at">input.list =</span> <span class="cn">NULL</span>,</span>
-<span id="cb13-51"><a href="#cb13-51"></a>      <span class="at">n.samp =</span> <span class="cn">NULL</span>,</span>
-<span id="cb13-52"><a href="#cb13-52"></a>      <span class="at">max.batch =</span> max.batch</span>
-<span id="cb13-53"><a href="#cb13-53"></a>    )</span>
-<span id="cb13-54"><a href="#cb13-54"></a>    pairplot <span class="ot">&lt;-</span> pair.plot<span class="sc">$</span>pair.plot</span>
-<span id="cb13-55"><a href="#cb13-55"></a>    </span>
-<span id="cb13-56"><a href="#cb13-56"></a>    <span class="co"># set additional elements of the list</span></span>
-<span id="cb13-57"><a href="#cb13-57"></a>    input_list<span class="sc">$</span>T12 <span class="ot">&lt;-</span> <span class="fu">c</span>(t1, t2)</span>
-<span id="cb13-58"><a href="#cb13-58"></a>    input_list<span class="sc">$</span>M0 <span class="ot">&lt;-</span> m0</span>
-<span id="cb13-59"><a href="#cb13-59"></a>    input_list<span class="sc">$</span>catalog.bru <span class="ot">&lt;-</span> data</span>
-<span id="cb13-60"><a href="#cb13-60"></a>    </span>
-<span id="cb13-61"><a href="#cb13-61"></a>    <span class="co"># posterior number of events</span></span>
-<span id="cb13-62"><a href="#cb13-62"></a>    N.post <span class="ot">&lt;-</span> <span class="fu">get_posterior_N</span>(<span class="at">input.list =</span> input_list)</span>
-<span id="cb13-63"><a href="#cb13-63"></a>    Npostplot <span class="ot">&lt;-</span> N.post<span class="sc">$</span>post.plot</span>
-<span id="cb13-64"><a href="#cb13-64"></a>    Npostmean <span class="ot">&lt;-</span> N.post<span class="sc">$</span>post.df[<span class="fu">which.max</span>(N.post<span class="sc">$</span>post.df<span class="sc">$</span>mean), <span class="dv">1</span>] </span>
-<span id="cb13-65"><a href="#cb13-65"></a>    </span>
-<span id="cb13-66"><a href="#cb13-66"></a>    <span class="co"># number of large events</span></span>
-<span id="cb13-67"><a href="#cb13-67"></a>    large_events <span class="ot">&lt;-</span> data[data<span class="sc">$</span>magnitudes <span class="sc">&gt;=</span> mag,]</span>
-<span id="cb13-68"><a href="#cb13-68"></a>    Nlarge <span class="ot">&lt;-</span> <span class="fu">nrow</span>(large_events)</span>
-<span id="cb13-69"><a href="#cb13-69"></a>    </span>
-<span id="cb13-70"><a href="#cb13-70"></a>    <span class="co"># mean absolute distance of the differences in magnitudes</span></span>
-<span id="cb13-71"><a href="#cb13-71"></a>    diff_mag <span class="ot">&lt;-</span> <span class="fu">diff</span>(data<span class="sc">$</span>magnitudes)</span>
-<span id="cb13-72"><a href="#cb13-72"></a>    abs_dist_mag <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(diff_mag))</span>
-<span id="cb13-73"><a href="#cb13-73"></a>    </span>
-<span id="cb13-74"><a href="#cb13-74"></a>    <span class="co"># mean absolute distance of the inter-arrival time </span></span>
-<span id="cb13-75"><a href="#cb13-75"></a>    interarrival <span class="ot">&lt;-</span> <span class="fu">diff</span>(data<span class="sc">$</span>ts)</span>
-<span id="cb13-76"><a href="#cb13-76"></a>    abs_dist_int <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(interarrival))</span>
-<span id="cb13-77"><a href="#cb13-77"></a>    </span>
-<span id="cb13-78"><a href="#cb13-78"></a>    <span class="co"># check if overdispersion occurs</span></span>
-<span id="cb13-79"><a href="#cb13-79"></a>    m_int_time <span class="ot">&lt;-</span> <span class="fu">mean</span>(interarrival)</span>
-<span id="cb13-80"><a href="#cb13-80"></a>    v_int_time <span class="ot">&lt;-</span> <span class="fu">var</span>(interarrival)</span>
-<span id="cb13-81"><a href="#cb13-81"></a>    overdisp <span class="ot">&lt;-</span> m_int_time <span class="sc">^</span> <span class="dv">2</span> <span class="sc">&lt;</span> v_int_time</span>
-<span id="cb13-82"><a href="#cb13-82"></a>    </span>
-<span id="cb13-83"><a href="#cb13-83"></a>    <span class="co"># triggering function plots</span></span>
-<span id="cb13-84"><a href="#cb13-84"></a>    <span class="co"># posterior</span></span>
-<span id="cb13-85"><a href="#cb13-85"></a>    triplotpost <span class="ot">&lt;-</span> <span class="fu">triggering_fun_plot</span>(</span>
-<span id="cb13-86"><a href="#cb13-86"></a>      <span class="at">input.list =</span> input_list,</span>
-<span id="cb13-87"><a href="#cb13-87"></a>      <span class="at">post.samp =</span> post.samp,</span>
-<span id="cb13-88"><a href="#cb13-88"></a>      <span class="at">n.samp =</span> <span class="cn">NULL</span>, <span class="at">magnitude =</span> mag,</span>
-<span id="cb13-89"><a href="#cb13-89"></a>      <span class="at">t.end =</span> t.end.tri.post, <span class="at">n.breaks =</span> n.breaks</span>
-<span id="cb13-90"><a href="#cb13-90"></a>    )</span>
-<span id="cb13-91"><a href="#cb13-91"></a>    </span>
-<span id="cb13-92"><a href="#cb13-92"></a>    <span class="co"># prior</span></span>
-<span id="cb13-93"><a href="#cb13-93"></a>    triplotprior <span class="ot">&lt;-</span> <span class="fu">triggering_fun_plot_prior</span>(<span class="at">input.list =</span> input_list, </span>
-<span id="cb13-94"><a href="#cb13-94"></a>                              <span class="at">magnitude =</span> mag, <span class="at">n.samp =</span> n.samp, </span>
-<span id="cb13-95"><a href="#cb13-95"></a>                              <span class="at">t.end =</span> t.end.tri.prior)</span>
-<span id="cb13-96"><a href="#cb13-96"></a>    </span>
-<span id="cb13-97"><a href="#cb13-97"></a>    <span class="co"># omori plots</span></span>
-<span id="cb13-98"><a href="#cb13-98"></a>    <span class="co"># posterior</span></span>
-<span id="cb13-99"><a href="#cb13-99"></a>    omoripost <span class="ot">&lt;-</span> <span class="fu">omori_plot_posterior</span>(<span class="at">input.list =</span> input_list, </span>
-<span id="cb13-100"><a href="#cb13-100"></a>                         <span class="at">post.samp =</span> post.samp, </span>
-<span id="cb13-101"><a href="#cb13-101"></a>                         <span class="at">n.samp =</span> <span class="cn">NULL</span>, <span class="at">t.end =</span> t.end.omori.post)</span>
-<span id="cb13-102"><a href="#cb13-102"></a>    </span>
-<span id="cb13-103"><a href="#cb13-103"></a>    <span class="co"># prior</span></span>
-<span id="cb13-104"><a href="#cb13-104"></a>    omoriprior <span class="ot">&lt;-</span> <span class="fu">omori_plot_prior</span>(<span class="at">input.list =</span> input_list, </span>
-<span id="cb13-105"><a href="#cb13-105"></a>                                   <span class="at">n.samp =</span> n.samp, </span>
-<span id="cb13-106"><a href="#cb13-106"></a>                                    <span class="at">t.end =</span> t.end.omori.prior)</span>
-<span id="cb13-107"><a href="#cb13-107"></a>    </span>
-<span id="cb13-108"><a href="#cb13-108"></a>    <span class="co"># returns the whole environment</span></span>
-<span id="cb13-109"><a href="#cb13-109"></a>    envir <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
-<span id="cb13-110"><a href="#cb13-110"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(envir))</span>
-<span id="cb13-111"><a href="#cb13-111"></a>}</span>
-<span id="cb13-112"><a href="#cb13-112"></a>etas <span class="ot">&lt;-</span> <span class="fu">ETAS</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb13-47"><a href="#cb13-47"></a>    <span class="co"># Take the averages of the posterior parameter estimates.</span></span>
+<span id="cb13-48"><a href="#cb13-48"></a>    post.par <span class="ot">&lt;-</span> <span class="fu">apply</span>(post.samp, <span class="dv">2</span>, mean)</span>
+<span id="cb13-49"><a href="#cb13-49"></a>    </span>
+<span id="cb13-50"><a href="#cb13-50"></a>    <span class="co"># Pair plot.</span></span>
+<span id="cb13-51"><a href="#cb13-51"></a>    pair.plot <span class="ot">&lt;-</span> <span class="fu">post_pairs_plot</span>(</span>
+<span id="cb13-52"><a href="#cb13-52"></a>      <span class="at">post.samp =</span> post.samp,</span>
+<span id="cb13-53"><a href="#cb13-53"></a>      <span class="at">input.list =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-54"><a href="#cb13-54"></a>      <span class="at">n.samp =</span> <span class="cn">NULL</span>,</span>
+<span id="cb13-55"><a href="#cb13-55"></a>      <span class="at">max.batch =</span> max.batch</span>
+<span id="cb13-56"><a href="#cb13-56"></a>    )</span>
+<span id="cb13-57"><a href="#cb13-57"></a>    pairplot <span class="ot">&lt;-</span> pair.plot<span class="sc">$</span>pair.plot</span>
+<span id="cb13-58"><a href="#cb13-58"></a>    </span>
+<span id="cb13-59"><a href="#cb13-59"></a>    <span class="co"># Set additional elements of the list.</span></span>
+<span id="cb13-60"><a href="#cb13-60"></a>    input_list<span class="sc">$</span>T12 <span class="ot">&lt;-</span> <span class="fu">c</span>(t1, t2)</span>
+<span id="cb13-61"><a href="#cb13-61"></a>    input_list<span class="sc">$</span>M0 <span class="ot">&lt;-</span> m0</span>
+<span id="cb13-62"><a href="#cb13-62"></a>    input_list<span class="sc">$</span>catalog.bru <span class="ot">&lt;-</span> data</span>
+<span id="cb13-63"><a href="#cb13-63"></a>    </span>
+<span id="cb13-64"><a href="#cb13-64"></a>    <span class="co"># Posterior number of events.</span></span>
+<span id="cb13-65"><a href="#cb13-65"></a>    N.post <span class="ot">&lt;-</span> <span class="fu">get_posterior_N</span>(<span class="at">input.list =</span> input_list)</span>
+<span id="cb13-66"><a href="#cb13-66"></a>    Npostplot <span class="ot">&lt;-</span> N.post<span class="sc">$</span>post.plot</span>
+<span id="cb13-67"><a href="#cb13-67"></a>    Npostmean <span class="ot">&lt;-</span> N.post<span class="sc">$</span>post.df[<span class="fu">which.max</span>(N.post<span class="sc">$</span>post.df<span class="sc">$</span>mean), <span class="dv">1</span>] </span>
+<span id="cb13-68"><a href="#cb13-68"></a>    </span>
+<span id="cb13-69"><a href="#cb13-69"></a>    <span class="co"># Number of large events.</span></span>
+<span id="cb13-70"><a href="#cb13-70"></a>    large_events <span class="ot">&lt;-</span> data[data<span class="sc">$</span>magnitudes <span class="sc">&gt;=</span> mag,]</span>
+<span id="cb13-71"><a href="#cb13-71"></a>    Nlarge <span class="ot">&lt;-</span> <span class="fu">nrow</span>(large_events)</span>
+<span id="cb13-72"><a href="#cb13-72"></a>    </span>
+<span id="cb13-73"><a href="#cb13-73"></a>    <span class="co"># Mean absolute distance of the differences in magnitudes.</span></span>
+<span id="cb13-74"><a href="#cb13-74"></a>    diff_mag <span class="ot">&lt;-</span> <span class="fu">diff</span>(data<span class="sc">$</span>magnitudes)</span>
+<span id="cb13-75"><a href="#cb13-75"></a>    abs_dist_mag <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(diff_mag))</span>
+<span id="cb13-76"><a href="#cb13-76"></a>    </span>
+<span id="cb13-77"><a href="#cb13-77"></a>    <span class="co"># Mean absolute distance of the inter-arrival time. </span></span>
+<span id="cb13-78"><a href="#cb13-78"></a>    interarrival <span class="ot">&lt;-</span> <span class="fu">diff</span>(data<span class="sc">$</span>ts)</span>
+<span id="cb13-79"><a href="#cb13-79"></a>    abs_dist_int <span class="ot">&lt;-</span> <span class="fu">mean</span>(<span class="fu">abs</span>(interarrival))</span>
+<span id="cb13-80"><a href="#cb13-80"></a>    </span>
+<span id="cb13-81"><a href="#cb13-81"></a>    <span class="co"># Check if over-dispersion occurs.</span></span>
+<span id="cb13-82"><a href="#cb13-82"></a>    m_int_time <span class="ot">&lt;-</span> <span class="fu">mean</span>(interarrival)</span>
+<span id="cb13-83"><a href="#cb13-83"></a>    v_int_time <span class="ot">&lt;-</span> <span class="fu">var</span>(interarrival)</span>
+<span id="cb13-84"><a href="#cb13-84"></a>    overdisp <span class="ot">&lt;-</span> m_int_time <span class="sc">^</span> <span class="dv">2</span> <span class="sc">&lt;</span> v_int_time</span>
+<span id="cb13-85"><a href="#cb13-85"></a>    </span>
+<span id="cb13-86"><a href="#cb13-86"></a>    <span class="co"># Triggering function plots.</span></span>
+<span id="cb13-87"><a href="#cb13-87"></a>    <span class="co"># Posterior plot.</span></span>
+<span id="cb13-88"><a href="#cb13-88"></a>    triplotpost <span class="ot">&lt;-</span> <span class="fu">triggering_fun_plot</span>(</span>
+<span id="cb13-89"><a href="#cb13-89"></a>      <span class="at">input.list =</span> input_list,</span>
+<span id="cb13-90"><a href="#cb13-90"></a>      <span class="at">post.samp =</span> post.samp,</span>
+<span id="cb13-91"><a href="#cb13-91"></a>      <span class="at">n.samp =</span> <span class="cn">NULL</span>, <span class="at">magnitude =</span> mag,</span>
+<span id="cb13-92"><a href="#cb13-92"></a>      <span class="at">t.end =</span> t.end.tri.post, <span class="at">n.breaks =</span> n.breaks</span>
+<span id="cb13-93"><a href="#cb13-93"></a>    )</span>
+<span id="cb13-94"><a href="#cb13-94"></a>    </span>
+<span id="cb13-95"><a href="#cb13-95"></a>    <span class="co"># Prior plot.</span></span>
+<span id="cb13-96"><a href="#cb13-96"></a>    triplotprior <span class="ot">&lt;-</span> <span class="fu">triggering_fun_plot_prior</span>(<span class="at">input.list =</span> input_list, </span>
+<span id="cb13-97"><a href="#cb13-97"></a>                              <span class="at">magnitude =</span> mag, <span class="at">n.samp =</span> n.samp, </span>
+<span id="cb13-98"><a href="#cb13-98"></a>                              <span class="at">t.end =</span> t.end.tri.prior)</span>
+<span id="cb13-99"><a href="#cb13-99"></a>    </span>
+<span id="cb13-100"><a href="#cb13-100"></a>    <span class="co"># Omori plots.</span></span>
+<span id="cb13-101"><a href="#cb13-101"></a>    <span class="co"># Posterior plot.</span></span>
+<span id="cb13-102"><a href="#cb13-102"></a>    omoripost <span class="ot">&lt;-</span> <span class="fu">omori_plot_posterior</span>(<span class="at">input.list =</span> input_list, </span>
+<span id="cb13-103"><a href="#cb13-103"></a>                         <span class="at">post.samp =</span> post.samp, </span>
+<span id="cb13-104"><a href="#cb13-104"></a>                         <span class="at">n.samp =</span> <span class="cn">NULL</span>, <span class="at">t.end =</span> t.end.omori.post)</span>
+<span id="cb13-105"><a href="#cb13-105"></a>    </span>
+<span id="cb13-106"><a href="#cb13-106"></a>    <span class="co"># Prior plot.</span></span>
+<span id="cb13-107"><a href="#cb13-107"></a>    omoriprior <span class="ot">&lt;-</span> <span class="fu">omori_plot_prior</span>(<span class="at">input.list =</span> input_list, </span>
+<span id="cb13-108"><a href="#cb13-108"></a>                                   <span class="at">n.samp =</span> n.samp, </span>
+<span id="cb13-109"><a href="#cb13-109"></a>                                    <span class="at">t.end =</span> t.end.omori.prior)</span>
+<span id="cb13-110"><a href="#cb13-110"></a>    </span>
+<span id="cb13-111"><a href="#cb13-111"></a>    <span class="co"># Return the whole environment.</span></span>
+<span id="cb13-112"><a href="#cb13-112"></a>    envir <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
+<span id="cb13-113"><a href="#cb13-113"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(envir))</span>
+<span id="cb13-114"><a href="#cb13-114"></a>}</span>
+<span id="cb13-115"><a href="#cb13-115"></a>etas <span class="ot">&lt;-</span> <span class="fu">ETAS</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Pair plot.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb14"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1"></a>etas<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
 <figure class="figure">
 <p><img src="Dissertation-2_files/figure-html/unnamed-chunk-14-1.png" class="img-fluid figure-img" width="672"></p>
-<p></p><figcaption class="figure-caption">Pair Plots for Parameters of the L’Aquila Sequence</figcaption><p></p>
+<p></p><figcaption class="figure-caption">Pair Plot for Parameters of the L’Aquila Sequence</figcaption><p></p>
 </figure>
 </div>
 </div>
 </div>
-<p>Effect of mis-specifying parameters</p>
+</section>
+<section id="effects-of-mis-specifying-parameters" class="level2">
+<h2 class="anchored" data-anchor-id="effects-of-mis-specifying-parameters">Effects of mis-specifying parameters</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb15"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1"></a>Copula <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">mu_a =</span> .<span class="dv">3</span>, <span class="at">mu_b =</span> .<span class="dv">6</span>, </span>
 <span id="cb15-2"><a href="#cb15-2"></a>                   <span class="at">k_a =</span> <span class="dv">0</span>, <span class="at">k_b =</span> <span class="dv">10</span>,</span>
@@ -469,64 +484,70 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb15-4"><a href="#cb15-4"></a>                   <span class="at">c_a =</span> <span class="dv">0</span>, <span class="at">c_b =</span> <span class="dv">10</span>,</span>
 <span id="cb15-5"><a href="#cb15-5"></a>                   <span class="at">p_a =</span> <span class="dv">1</span>, <span class="at">p_b =</span> <span class="dv">10</span>){</span>
 <span id="cb15-6"><a href="#cb15-6"></a>    </span>
-<span id="cb15-7"><a href="#cb15-7"></a>    <span class="co"># set copula transformations list</span></span>
-<span id="cb15-8"><a href="#cb15-8"></a>    linkf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-9"><a href="#cb15-9"></a>      <span class="at">mu =</span> \(x) <span class="fu">gamma_t</span>(x, mu_a, mu_b),</span>
-<span id="cb15-10"><a href="#cb15-10"></a>      <span class="at">K =</span> \(x) <span class="fu">unif_t</span>(x, k_a, k_b),</span>
-<span id="cb15-11"><a href="#cb15-11"></a>      <span class="at">alpha =</span> \(x) <span class="fu">unif_t</span>(x, alp_a, alp_b),</span>
-<span id="cb15-12"><a href="#cb15-12"></a>      <span class="at">c_ =</span> \(x) <span class="fu">unif_t</span>(x, c_a, c_b),</span>
-<span id="cb15-13"><a href="#cb15-13"></a>      <span class="at">p =</span> \(x) <span class="fu">unif_t</span>(x, p_a, p_b)</span>
-<span id="cb15-14"><a href="#cb15-14"></a>    )</span>
-<span id="cb15-15"><a href="#cb15-15"></a>    </span>
-<span id="cb15-16"><a href="#cb15-16"></a>    <span class="co"># set inverse copula transformations list</span></span>
-<span id="cb15-17"><a href="#cb15-17"></a>    invlinkf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-18"><a href="#cb15-18"></a>      <span class="at">mu =</span> \(x) <span class="fu">inv_gamma_t</span>(x, mu_a, mu_b),</span>
-<span id="cb15-19"><a href="#cb15-19"></a>      <span class="at">K =</span> \(x) <span class="fu">inv_unif_t</span>(x, k_a, k_b),</span>
-<span id="cb15-20"><a href="#cb15-20"></a>      <span class="at">alpha =</span> \(x) <span class="fu">inv_unif_t</span>(x, alp_a, alp_b),</span>
-<span id="cb15-21"><a href="#cb15-21"></a>      <span class="at">c_ =</span> \(x) <span class="fu">inv_unif_t</span>(x, c_a, c_b),</span>
-<span id="cb15-22"><a href="#cb15-22"></a>      <span class="at">p =</span> \(x) <span class="fu">inv_unif_t</span>(x, p_a, p_b)</span>
-<span id="cb15-23"><a href="#cb15-23"></a>    )</span>
-<span id="cb15-24"><a href="#cb15-24"></a>    </span>
-<span id="cb15-25"><a href="#cb15-25"></a>    <span class="co"># set up list of initial values</span></span>
-<span id="cb15-26"><a href="#cb15-26"></a>    thinit <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-27"><a href="#cb15-27"></a>      <span class="at">th.mu =</span> invlinkf<span class="sc">$</span><span class="fu">mu</span>(.<span class="dv">5</span>),</span>
-<span id="cb15-28"><a href="#cb15-28"></a>      <span class="at">th.K =</span> invlinkf<span class="sc">$</span><span class="fu">K</span>(<span class="dv">1</span>),</span>
-<span id="cb15-29"><a href="#cb15-29"></a>      <span class="at">th.alpha =</span> invlinkf<span class="sc">$</span><span class="fu">alpha</span>(<span class="dv">1</span>),</span>
-<span id="cb15-30"><a href="#cb15-30"></a>      <span class="at">th.c =</span> invlinkf<span class="sc">$</span><span class="fu">c_</span>(<span class="dv">1</span>),</span>
-<span id="cb15-31"><a href="#cb15-31"></a>      <span class="at">th.p =</span> invlinkf<span class="sc">$</span><span class="fu">p</span>(<span class="dv">5</span>)</span>
-<span id="cb15-32"><a href="#cb15-32"></a>    )</span>
-<span id="cb15-33"><a href="#cb15-33"></a>    </span>
-<span id="cb15-34"><a href="#cb15-34"></a>    <span class="co"># set up list of bru options</span></span>
-<span id="cb15-35"><a href="#cb15-35"></a>    bruoptlist <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
-<span id="cb15-36"><a href="#cb15-36"></a>      <span class="at">bru_verbose =</span> <span class="dv">3</span>, <span class="co"># type of visual output</span></span>
-<span id="cb15-37"><a href="#cb15-37"></a>      <span class="at">bru_max_iter =</span> <span class="dv">70</span>, <span class="co"># maximum number of iterations</span></span>
-<span id="cb15-38"><a href="#cb15-38"></a>      <span class="co"># bru_method = list(max_step = 0.5),</span></span>
-<span id="cb15-39"><a href="#cb15-39"></a>      <span class="at">bru_initial =</span> thinit <span class="co"># parameters' initial values</span></span>
-<span id="cb15-40"><a href="#cb15-40"></a>    )</span>
-<span id="cb15-41"><a href="#cb15-41"></a>    </span>
-<span id="cb15-42"><a href="#cb15-42"></a>    <span class="co"># returns the whole environment</span></span>
-<span id="cb15-43"><a href="#cb15-43"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
-<span id="cb15-44"><a href="#cb15-44"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
-<span id="cb15-45"><a href="#cb15-45"></a>}</span>
-<span id="cb15-46"><a href="#cb15-46"></a>cop_mis_mu <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">mu_a =</span> <span class="dv">5</span>, <span class="at">mu_b =</span> <span class="dv">1</span>)</span>
-<span id="cb15-47"><a href="#cb15-47"></a>cop_mis_K <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">k_a =</span> .<span class="dv">99</span>, <span class="at">k_b =</span> <span class="fl">1.01</span>)</span>
-<span id="cb15-48"><a href="#cb15-48"></a>cop_mis_alp <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">mu_a =</span> .<span class="dv">99</span>, <span class="at">mu_b =</span> <span class="fl">1.01</span>)</span>
-<span id="cb15-49"><a href="#cb15-49"></a>cop_mis_c <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">c_a =</span> .<span class="dv">99</span>, <span class="at">c_b =</span> <span class="fl">1.01</span>)</span>
-<span id="cb15-50"><a href="#cb15-50"></a>cop_mis_p <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">p_a =</span> <span class="fl">4.9</span>, <span class="at">p_b =</span> <span class="fl">5.1</span>)</span>
-<span id="cb15-51"><a href="#cb15-51"></a></span>
-<span id="cb15-52"><a href="#cb15-52"></a>etas_mis_mu <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_mu<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
-<span id="cb15-53"><a href="#cb15-53"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_mu<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
-<span id="cb15-54"><a href="#cb15-54"></a>etas_mis_K <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_K<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
-<span id="cb15-55"><a href="#cb15-55"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_K<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
-<span id="cb15-56"><a href="#cb15-56"></a>etas_mis_alp <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_alp<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
-<span id="cb15-57"><a href="#cb15-57"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_alp<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
-<span id="cb15-58"><a href="#cb15-58"></a>etas_mis_c <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_c<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
-<span id="cb15-59"><a href="#cb15-59"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_c<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
-<span id="cb15-60"><a href="#cb15-60"></a>etas_mis_p <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_p<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
-<span id="cb15-61"><a href="#cb15-61"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_p<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb15-7"><a href="#cb15-7"></a>    <span class="co"># This function aims at changing parameters of the prior distributions,</span></span>
+<span id="cb15-8"><a href="#cb15-8"></a>    <span class="co"># and outputs a list of all the information.</span></span>
+<span id="cb15-9"><a href="#cb15-9"></a>    </span>
+<span id="cb15-10"><a href="#cb15-10"></a>    <span class="co"># Copula transformations.</span></span>
+<span id="cb15-11"><a href="#cb15-11"></a>    linkf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb15-12"><a href="#cb15-12"></a>      <span class="at">mu =</span> \(x) <span class="fu">gamma_t</span>(x, mu_a, mu_b),</span>
+<span id="cb15-13"><a href="#cb15-13"></a>      <span class="at">K =</span> \(x) <span class="fu">unif_t</span>(x, k_a, k_b),</span>
+<span id="cb15-14"><a href="#cb15-14"></a>      <span class="at">alpha =</span> \(x) <span class="fu">unif_t</span>(x, alp_a, alp_b),</span>
+<span id="cb15-15"><a href="#cb15-15"></a>      <span class="at">c_ =</span> \(x) <span class="fu">unif_t</span>(x, c_a, c_b),</span>
+<span id="cb15-16"><a href="#cb15-16"></a>      <span class="at">p =</span> \(x) <span class="fu">unif_t</span>(x, p_a, p_b)</span>
+<span id="cb15-17"><a href="#cb15-17"></a>    )</span>
+<span id="cb15-18"><a href="#cb15-18"></a>    </span>
+<span id="cb15-19"><a href="#cb15-19"></a>    <span class="co"># Inverse copula transformations.</span></span>
+<span id="cb15-20"><a href="#cb15-20"></a>    invlinkf <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb15-21"><a href="#cb15-21"></a>      <span class="at">mu =</span> \(x) <span class="fu">inv_gamma_t</span>(x, mu_a, mu_b),</span>
+<span id="cb15-22"><a href="#cb15-22"></a>      <span class="at">K =</span> \(x) <span class="fu">inv_unif_t</span>(x, k_a, k_b),</span>
+<span id="cb15-23"><a href="#cb15-23"></a>      <span class="at">alpha =</span> \(x) <span class="fu">inv_unif_t</span>(x, alp_a, alp_b),</span>
+<span id="cb15-24"><a href="#cb15-24"></a>      <span class="at">c_ =</span> \(x) <span class="fu">inv_unif_t</span>(x, c_a, c_b),</span>
+<span id="cb15-25"><a href="#cb15-25"></a>      <span class="at">p =</span> \(x) <span class="fu">inv_unif_t</span>(x, p_a, p_b)</span>
+<span id="cb15-26"><a href="#cb15-26"></a>    )</span>
+<span id="cb15-27"><a href="#cb15-27"></a>    </span>
+<span id="cb15-28"><a href="#cb15-28"></a>    <span class="co"># Initial values.</span></span>
+<span id="cb15-29"><a href="#cb15-29"></a>    thinit <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb15-30"><a href="#cb15-30"></a>      <span class="at">th.mu =</span> invlinkf<span class="sc">$</span><span class="fu">mu</span>(.<span class="dv">5</span>),</span>
+<span id="cb15-31"><a href="#cb15-31"></a>      <span class="at">th.K =</span> invlinkf<span class="sc">$</span><span class="fu">K</span>(<span class="dv">1</span>),</span>
+<span id="cb15-32"><a href="#cb15-32"></a>      <span class="at">th.alpha =</span> invlinkf<span class="sc">$</span><span class="fu">alpha</span>(<span class="dv">1</span>),</span>
+<span id="cb15-33"><a href="#cb15-33"></a>      <span class="at">th.c =</span> invlinkf<span class="sc">$</span><span class="fu">c_</span>(<span class="dv">1</span>),</span>
+<span id="cb15-34"><a href="#cb15-34"></a>      <span class="at">th.p =</span> invlinkf<span class="sc">$</span><span class="fu">p</span>(<span class="dv">5</span>)</span>
+<span id="cb15-35"><a href="#cb15-35"></a>    )</span>
+<span id="cb15-36"><a href="#cb15-36"></a>    </span>
+<span id="cb15-37"><a href="#cb15-37"></a>    <span class="co"># Set up list of bru options.</span></span>
+<span id="cb15-38"><a href="#cb15-38"></a>    bru.opt.list <span class="ot">&lt;-</span> <span class="fu">list</span>(</span>
+<span id="cb15-39"><a href="#cb15-39"></a>      <span class="at">bru_verbose =</span> <span class="dv">3</span>, <span class="co"># Type of visual output.</span></span>
+<span id="cb15-40"><a href="#cb15-40"></a>      <span class="at">bru_max_iter =</span> <span class="dv">70</span>, <span class="co"># Maximum number of iterations.</span></span>
+<span id="cb15-41"><a href="#cb15-41"></a>      <span class="at">bru_initial =</span> th.init <span class="co"># Initial values.</span></span>
+<span id="cb15-42"><a href="#cb15-42"></a>    )</span>
+<span id="cb15-43"><a href="#cb15-43"></a>    </span>
+<span id="cb15-44"><a href="#cb15-44"></a>    <span class="co"># Returns the whole environment.</span></span>
+<span id="cb15-45"><a href="#cb15-45"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
+<span id="cb15-46"><a href="#cb15-46"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
+<span id="cb15-47"><a href="#cb15-47"></a>}</span>
+<span id="cb15-48"><a href="#cb15-48"></a></span>
+<span id="cb15-49"><a href="#cb15-49"></a><span class="co"># Mis-specify the parameters.</span></span>
+<span id="cb15-50"><a href="#cb15-50"></a>cop_mis_mu <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">mu_a =</span> <span class="dv">5</span>, <span class="at">mu_b =</span> <span class="dv">1</span>)</span>
+<span id="cb15-51"><a href="#cb15-51"></a>cop_mis_K <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">k_a =</span> .<span class="dv">99</span>, <span class="at">k_b =</span> <span class="fl">1.01</span>)</span>
+<span id="cb15-52"><a href="#cb15-52"></a>cop_mis_alp <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">mu_a =</span> .<span class="dv">99</span>, <span class="at">mu_b =</span> <span class="fl">1.01</span>)</span>
+<span id="cb15-53"><a href="#cb15-53"></a>cop_mis_c <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">c_a =</span> .<span class="dv">99</span>, <span class="at">c_b =</span> <span class="fl">1.01</span>)</span>
+<span id="cb15-54"><a href="#cb15-54"></a>cop_mis_p <span class="ot">&lt;-</span> <span class="fu">Copula</span>(<span class="at">p_a =</span> <span class="fl">4.9</span>, <span class="at">p_b =</span> <span class="fl">5.1</span>)</span>
+<span id="cb15-55"><a href="#cb15-55"></a></span>
+<span id="cb15-56"><a href="#cb15-56"></a><span class="co"># Fit the models.</span></span>
+<span id="cb15-57"><a href="#cb15-57"></a>etas_mis_mu <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_mu<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
+<span id="cb15-58"><a href="#cb15-58"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_mu<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
+<span id="cb15-59"><a href="#cb15-59"></a>etas_mis_K <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_K<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
+<span id="cb15-60"><a href="#cb15-60"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_K<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
+<span id="cb15-61"><a href="#cb15-61"></a>etas_mis_alp <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_alp<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
+<span id="cb15-62"><a href="#cb15-62"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_alp<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
+<span id="cb15-63"><a href="#cb15-63"></a>etas_mis_c <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_c<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
+<span id="cb15-64"><a href="#cb15-64"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_c<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span>
+<span id="cb15-65"><a href="#cb15-65"></a>etas_mis_p <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">Link.f =</span> cop_mis_p<span class="sc">$</span>environ<span class="sc">$</span>linkf, </span>
+<span id="cb15-66"><a href="#cb15-66"></a>                   <span class="at">Bru.opt.list =</span> cop_mis_p<span class="sc">$</span>environ<span class="sc">$</span>bruoptlist)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Pair plots.</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co"># Mis-specifying μ </span></span>
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1"></a><span class="co"># Mis-specifying μ. </span></span>
 <span id="cb16-2"><a href="#cb16-2"></a>etas_mis_mu<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -538,7 +559,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="co"># Mis-specifying K</span></span>
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1"></a><span class="co"># Mis-specifying K.</span></span>
 <span id="cb17-2"><a href="#cb17-2"></a>etas_mis_K<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -550,7 +571,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="co"># Mis-specifying α</span></span>
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1"></a><span class="co"># Mis-specifying α.</span></span>
 <span id="cb18-2"><a href="#cb18-2"></a>etas_mis_alp<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -562,7 +583,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># Mis-specifying c</span></span>
+<div class="sourceCode cell-code" id="cb19"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1"></a><span class="co"># Mis-specifying c.</span></span>
 <span id="cb19-2"><a href="#cb19-2"></a>etas_mis_c<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -574,7 +595,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Mis-specifying p</span></span>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1"></a><span class="co"># Mis-specifying p.</span></span>
 <span id="cb20-2"><a href="#cb20-2"></a>etas_mis_p<span class="sc">$</span>envir<span class="sc">$</span>pairplot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
 <div class="quarto-figure quarto-figure-center">
@@ -585,70 +606,77 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
-<p>Synthetic catalogues generation</p>
+</section>
+<section id="synthetic-catalogues-generation" class="level2">
+<h2 class="anchored" data-anchor-id="synthetic-catalogues-generation">Synthetic Catalogues Generation</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb21"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1"></a>mult.synth.ETAS <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">t1 =</span> <span class="cn">NULL</span>, <span class="at">t2 =</span> <span class="cn">NULL</span>, <span class="at">n.cat =</span> <span class="dv">1000</span>,</span>
 <span id="cb21-2"><a href="#cb21-2"></a>                     <span class="at">ht =</span> <span class="cn">NULL</span>){</span>
 <span id="cb21-3"><a href="#cb21-3"></a>    </span>
-<span id="cb21-4"><a href="#cb21-4"></a>    <span class="co"># inherits the environment from function `ETAS`</span></span>
-<span id="cb21-5"><a href="#cb21-5"></a>    envir <span class="ot">&lt;-</span> etas<span class="sc">$</span>envir  </span>
+<span id="cb21-4"><a href="#cb21-4"></a>    <span class="co"># This function aims at generating `n.cat` synthetic catalogues in </span></span>
+<span id="cb21-5"><a href="#cb21-5"></a>    <span class="co"># between T1 and T2, and the imposed history is set in `ht`.</span></span>
 <span id="cb21-6"><a href="#cb21-6"></a>    </span>
-<span id="cb21-7"><a href="#cb21-7"></a>    <span class="co"># updates environments if specified by users</span></span>
-<span id="cb21-8"><a href="#cb21-8"></a>    envir<span class="sc">$</span>t1 <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.null</span>(t1), t1, envir<span class="sc">$</span>t1)</span>
-<span id="cb21-9"><a href="#cb21-9"></a>    envir<span class="sc">$</span>t2 <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.null</span>(t2), t2, envir<span class="sc">$</span>t2)</span>
-<span id="cb21-10"><a href="#cb21-10"></a>    </span>
-<span id="cb21-11"><a href="#cb21-11"></a>    <span class="co"># Function to generate a synthetic catalogue</span></span>
-<span id="cb21-12"><a href="#cb21-12"></a>    synth.gen <span class="ot">&lt;-</span> <span class="cf">function</span>(i){</span>
-<span id="cb21-13"><a href="#cb21-13"></a>        iteration <span class="ot">&lt;-</span> i</span>
-<span id="cb21-14"><a href="#cb21-14"></a>        synth <span class="ot">&lt;-</span> <span class="fu">generate_temporal_ETAS_synthetic</span>(</span>
-<span id="cb21-15"><a href="#cb21-15"></a>                    <span class="at">theta =</span> envir<span class="sc">$</span>post.par <span class="sc">%&gt;%</span> as.list,</span>
-<span id="cb21-16"><a href="#cb21-16"></a>                    <span class="at">beta.p =</span> envir<span class="sc">$</span>beta.p,</span>
-<span id="cb21-17"><a href="#cb21-17"></a>                    <span class="at">M0 =</span> envir<span class="sc">$</span>m0, <span class="at">T1 =</span> envir<span class="sc">$</span>t1,</span>
-<span id="cb21-18"><a href="#cb21-18"></a>                    <span class="at">T2 =</span> envir<span class="sc">$</span>t2, <span class="at">Ht =</span> ht, <span class="at">ncore =</span> num.cores)</span>
-<span id="cb21-19"><a href="#cb21-19"></a>        <span class="fu">return</span>(synth)</span>
-<span id="cb21-20"><a href="#cb21-20"></a>    }</span>
-<span id="cb21-21"><a href="#cb21-21"></a>    </span>
-<span id="cb21-22"><a href="#cb21-22"></a>    <span class="co"># generates catalogues as list of lists</span></span>
-<span id="cb21-23"><a href="#cb21-23"></a>    multi.synth.cat.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(x)</span>
-<span id="cb21-24"><a href="#cb21-24"></a>        <span class="fu">synth.gen</span>(x))</span>
-<span id="cb21-25"><a href="#cb21-25"></a></span>
-<span id="cb21-26"><a href="#cb21-26"></a>    <span class="co"># stores catalogues as list of data.frames</span></span>
-<span id="cb21-27"><a href="#cb21-27"></a>    multi.synth.cat.list.df <span class="ot">&lt;-</span> <span class="fu">lapply</span>(multi.synth.cat.list,</span>
-<span id="cb21-28"><a href="#cb21-28"></a>                                      \(x) <span class="fu">do.call</span>(rbind, x))</span>
-<span id="cb21-29"><a href="#cb21-29"></a>    </span>
-<span id="cb21-30"><a href="#cb21-30"></a>    <span class="co"># counts the number of events in each catalogue</span></span>
-<span id="cb21-31"><a href="#cb21-31"></a>    Nevents <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">nrow</span>(</span>
-<span id="cb21-32"><a href="#cb21-32"></a>        multi.synth.cat.list.df[[i]])) <span class="sc">%&gt;%</span> unlist</span>
-<span id="cb21-33"><a href="#cb21-33"></a>    </span>
-<span id="cb21-34"><a href="#cb21-34"></a>    <span class="co"># counts the number of large events in each catalogue</span></span>
-<span id="cb21-35"><a href="#cb21-35"></a>    mag <span class="ot">&lt;-</span> etas<span class="sc">$</span>envir<span class="sc">$</span>mag</span>
-<span id="cb21-36"><a href="#cb21-36"></a>    Nlarge <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">sum</span>(</span>
-<span id="cb21-37"><a href="#cb21-37"></a>        multi.synth.cat.list.df[[i]]<span class="sc">$</span>magnitudes <span class="sc">&gt;=</span> mag)) <span class="sc">%&gt;%</span> unlist</span>
-<span id="cb21-38"><a href="#cb21-38"></a>    </span>
-<span id="cb21-39"><a href="#cb21-39"></a>    <span class="co"># extracts the highest magnitude in each catalogue</span></span>
-<span id="cb21-40"><a href="#cb21-40"></a>    MaxMag <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">max</span>(</span>
-<span id="cb21-41"><a href="#cb21-41"></a>        multi.synth.cat.list.df[[i]]<span class="sc">$</span>magnitudes)) <span class="sc">%&gt;%</span> unlist</span>
-<span id="cb21-42"><a href="#cb21-42"></a>    </span>
-<span id="cb21-43"><a href="#cb21-43"></a>    <span class="co"># sets catalogue identifier</span></span>
-<span id="cb21-44"><a href="#cb21-44"></a>    multi.synth.cat.list.df <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat),</span>
-<span id="cb21-45"><a href="#cb21-45"></a>                                      \(x) <span class="fu">cbind</span>(</span>
-<span id="cb21-46"><a href="#cb21-46"></a>                                          multi.synth.cat.list.df[[x]],</span>
-<span id="cb21-47"><a href="#cb21-47"></a>                                          <span class="at">cat.idx =</span> x, </span>
-<span id="cb21-48"><a href="#cb21-48"></a>                                          <span class="at">num_events =</span> Nevents[x],</span>
-<span id="cb21-49"><a href="#cb21-49"></a>                                          <span class="at">num_large =</span> Nlarge[x],</span>
-<span id="cb21-50"><a href="#cb21-50"></a>                                    <span class="at">max_mag =</span> MaxMag[x] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
-<span id="cb21-51"><a href="#cb21-51"></a>    </span>
-<span id="cb21-52"><a href="#cb21-52"></a>    <span class="co"># merges catalogues in unique data.frame</span></span>
-<span id="cb21-53"><a href="#cb21-53"></a>    multi.synth.cat.df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, multi.synth.cat.list.df)</span>
+<span id="cb21-7"><a href="#cb21-7"></a>    <span class="co"># Inherit the environment from the variable `etas`.</span></span>
+<span id="cb21-8"><a href="#cb21-8"></a>    envir <span class="ot">&lt;-</span> etas<span class="sc">$</span>envir  </span>
+<span id="cb21-9"><a href="#cb21-9"></a>    </span>
+<span id="cb21-10"><a href="#cb21-10"></a>    <span class="co"># Update environments if specified by users.</span></span>
+<span id="cb21-11"><a href="#cb21-11"></a>    envir<span class="sc">$</span>t1 <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.null</span>(t1), t1, envir<span class="sc">$</span>t1)</span>
+<span id="cb21-12"><a href="#cb21-12"></a>    envir<span class="sc">$</span>t2 <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="sc">!</span><span class="fu">is.null</span>(t2), t2, envir<span class="sc">$</span>t2)</span>
+<span id="cb21-13"><a href="#cb21-13"></a>    </span>
+<span id="cb21-14"><a href="#cb21-14"></a>    <span class="co"># Function to generate a synthetic catalogue.</span></span>
+<span id="cb21-15"><a href="#cb21-15"></a>    synth.gen <span class="ot">&lt;-</span> <span class="cf">function</span>(i){</span>
+<span id="cb21-16"><a href="#cb21-16"></a>        iteration <span class="ot">&lt;-</span> i</span>
+<span id="cb21-17"><a href="#cb21-17"></a>        synth <span class="ot">&lt;-</span> <span class="fu">generate_temporal_ETAS_synthetic</span>(</span>
+<span id="cb21-18"><a href="#cb21-18"></a>                    <span class="at">theta =</span> envir<span class="sc">$</span>post.par <span class="sc">%&gt;%</span> as.list,</span>
+<span id="cb21-19"><a href="#cb21-19"></a>                    <span class="at">beta.p =</span> envir<span class="sc">$</span>beta.p,</span>
+<span id="cb21-20"><a href="#cb21-20"></a>                    <span class="at">M0 =</span> envir<span class="sc">$</span>m0, <span class="at">T1 =</span> envir<span class="sc">$</span>t1,</span>
+<span id="cb21-21"><a href="#cb21-21"></a>                    <span class="at">T2 =</span> envir<span class="sc">$</span>t2, <span class="at">Ht =</span> ht, <span class="at">ncore =</span> num.cores)</span>
+<span id="cb21-22"><a href="#cb21-22"></a>        <span class="fu">return</span>(synth)</span>
+<span id="cb21-23"><a href="#cb21-23"></a>    }</span>
+<span id="cb21-24"><a href="#cb21-24"></a>    </span>
+<span id="cb21-25"><a href="#cb21-25"></a>    <span class="co"># Generate catalogues as list of lists.</span></span>
+<span id="cb21-26"><a href="#cb21-26"></a>    multi.synth.cat.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(x)</span>
+<span id="cb21-27"><a href="#cb21-27"></a>        <span class="fu">synth.gen</span>(x))</span>
+<span id="cb21-28"><a href="#cb21-28"></a></span>
+<span id="cb21-29"><a href="#cb21-29"></a>    <span class="co"># Stores catalogues as a list of data frames.</span></span>
+<span id="cb21-30"><a href="#cb21-30"></a>    multi.synth.cat.list.df <span class="ot">&lt;-</span> <span class="fu">lapply</span>(multi.synth.cat.list,</span>
+<span id="cb21-31"><a href="#cb21-31"></a>                                      \(x) <span class="fu">do.call</span>(rbind, x))</span>
+<span id="cb21-32"><a href="#cb21-32"></a>    </span>
+<span id="cb21-33"><a href="#cb21-33"></a>    <span class="co"># Count the number of events in each catalogue.</span></span>
+<span id="cb21-34"><a href="#cb21-34"></a>    Nevents <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">nrow</span>(</span>
+<span id="cb21-35"><a href="#cb21-35"></a>        multi.synth.cat.list.df[[i]])) <span class="sc">%&gt;%</span> unlist</span>
+<span id="cb21-36"><a href="#cb21-36"></a>    </span>
+<span id="cb21-37"><a href="#cb21-37"></a>    <span class="co"># Count the number of large events in each catalogue.</span></span>
+<span id="cb21-38"><a href="#cb21-38"></a>    mag <span class="ot">&lt;-</span> etas<span class="sc">$</span>envir<span class="sc">$</span>mag</span>
+<span id="cb21-39"><a href="#cb21-39"></a>    Nlarge <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">sum</span>(</span>
+<span id="cb21-40"><a href="#cb21-40"></a>        multi.synth.cat.list.df[[i]]<span class="sc">$</span>magnitudes <span class="sc">&gt;=</span> mag)) <span class="sc">%&gt;%</span> unlist</span>
+<span id="cb21-41"><a href="#cb21-41"></a>    </span>
+<span id="cb21-42"><a href="#cb21-42"></a>    <span class="co"># Extract the highest magnitude in each catalogue.</span></span>
+<span id="cb21-43"><a href="#cb21-43"></a>    MaxMag <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat), \(i) <span class="fu">max</span>(</span>
+<span id="cb21-44"><a href="#cb21-44"></a>        multi.synth.cat.list.df[[i]]<span class="sc">$</span>magnitudes)) <span class="sc">%&gt;%</span> unlist</span>
+<span id="cb21-45"><a href="#cb21-45"></a>    </span>
+<span id="cb21-46"><a href="#cb21-46"></a>    <span class="co"># Set catalogue identifiers.</span></span>
+<span id="cb21-47"><a href="#cb21-47"></a>    multi.synth.cat.list.df <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(n.cat),</span>
+<span id="cb21-48"><a href="#cb21-48"></a>                                      \(x) <span class="fu">cbind</span>(</span>
+<span id="cb21-49"><a href="#cb21-49"></a>                                          multi.synth.cat.list.df[[x]],</span>
+<span id="cb21-50"><a href="#cb21-50"></a>                                          <span class="at">cat.idx =</span> x, </span>
+<span id="cb21-51"><a href="#cb21-51"></a>                                          <span class="at">num_events =</span> Nevents[x],</span>
+<span id="cb21-52"><a href="#cb21-52"></a>                                          <span class="at">num_large =</span> Nlarge[x],</span>
+<span id="cb21-53"><a href="#cb21-53"></a>                                    <span class="at">max_mag =</span> MaxMag[x] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
 <span id="cb21-54"><a href="#cb21-54"></a>    </span>
-<span id="cb21-55"><a href="#cb21-55"></a>    <span class="co"># returns the whole environment</span></span>
-<span id="cb21-56"><a href="#cb21-56"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
-<span id="cb21-57"><a href="#cb21-57"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
-<span id="cb21-58"><a href="#cb21-58"></a>}</span>
-<span id="cb21-59"><a href="#cb21-59"></a></span>
-<span id="cb21-60"><a href="#cb21-60"></a>mult.synth <span class="ot">&lt;-</span> <span class="fu">mult.synth.ETAS</span>(<span class="at">ht =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb21-55"><a href="#cb21-55"></a>    <span class="co"># Merge catalogues in a unique data frame.</span></span>
+<span id="cb21-56"><a href="#cb21-56"></a>    multi.synth.cat.df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, multi.synth.cat.list.df)</span>
+<span id="cb21-57"><a href="#cb21-57"></a>    </span>
+<span id="cb21-58"><a href="#cb21-58"></a>    <span class="co"># Return the whole environment.</span></span>
+<span id="cb21-59"><a href="#cb21-59"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
+<span id="cb21-60"><a href="#cb21-60"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
+<span id="cb21-61"><a href="#cb21-61"></a>}</span>
+<span id="cb21-62"><a href="#cb21-62"></a></span>
+<span id="cb21-63"><a href="#cb21-63"></a>mult.synth <span class="ot">&lt;-</span> <span class="fu">mult.synth.ETAS</span>(<span class="at">ht =</span> <span class="cn">NULL</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Fitting Models on the Synthetic Catalogues</p>
+</section>
+<section id="hierarchical-clutering-and-sampling" class="level2">
+<h2 class="anchored" data-anchor-id="hierarchical-clutering-and-sampling">Hierarchical Clutering and Sampling</h2>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb22"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1"></a>hier_clu_samp <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">syn =</span> mult.synth, <span class="at">kmax =</span> <span class="dv">30</span>){</span>
 <span id="cb22-2"><a href="#cb22-2"></a>    </span>
@@ -723,13 +751,13 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <span id="cb22-71"><a href="#cb22-71"></a>            \(i) (synth_1600<span class="sc">$</span>clusters <span class="sc">==</span> i) <span class="sc">%&gt;%</span> </span>
 <span id="cb22-72"><a href="#cb22-72"></a>                which <span class="sc">%&gt;%</span> <span class="fu">sample</span>(<span class="dv">1</span>))) <span class="sc">%&gt;%</span> unlist <span class="sc">%&gt;%</span> sample</span>
 <span id="cb22-73"><a href="#cb22-73"></a>    </span>
-<span id="cb22-74"><a href="#cb22-74"></a>    <span class="co"># Return the dendrogram, the 3D scatter plot, and the sample ids.</span></span>
+<span id="cb22-74"><a href="#cb22-74"></a>    <span class="co"># Return the dendrogram, the 3D scatter plot, and the sample IDs.</span></span>
 <span id="cb22-75"><a href="#cb22-75"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(dendro, three_d_scatter, samp.id))</span>
 <span id="cb22-76"><a href="#cb22-76"></a>}</span>
-<span id="cb22-77"><a href="#cb22-77"></a>hier_c <span class="ot">&lt;-</span> <span class="fu">hier_clu_samp</span>(mult.synth)</span>
-<span id="cb22-78"><a href="#cb22-78"></a>sampid <span class="ot">&lt;-</span> hier_c<span class="sc">$</span>samp.id</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb22-77"><a href="#cb22-77"></a>hier_c <span class="ot">&lt;-</span> <span class="fu">hier_clu_samp</span>(mult.synth) <span class="co"># Hierarchical clustering.</span></span>
+<span id="cb22-78"><a href="#cb22-78"></a>sampid <span class="ot">&lt;-</span> hier_c<span class="sc">$</span>samp.id <span class="co"># IDs of the samples.</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>Dendrogram of the Clustered Catalogues</p>
+<p>Dendrogram of the Clustered Catalogues.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb23"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1"></a>hier_c<span class="sc">$</span>dendro <span class="sc">%&gt;%</span> <span class="fu">plot</span>(<span class="at">leaflab =</span> <span class="st">'none'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -745,7 +773,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="cell">
 <div class="sourceCode cell-code" id="cb24"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1"></a>hier_c<span class="sc">$</span>three_d_scatter</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
-<p>3D Scatter Plot (static) of the Clustered Catalogues</p>
+<p>3D Scatter Plot (static) of the Clustered Catalogues.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb25"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">'cluster3d.png'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -761,82 +789,93 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 <div class="sourceCode cell-code" id="cb26"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1"></a>synth.model <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">syn =</span> mult.synth, </span>
 <span id="cb26-2"><a href="#cb26-2"></a>                        <span class="at">slice =</span> <span class="fu">seq</span>(<span class="dv">1</span>, <span class="dv">5</span>, <span class="at">by =</span> <span class="dv">1</span>)){</span>
 <span id="cb26-3"><a href="#cb26-3"></a>    </span>
-<span id="cb26-4"><a href="#cb26-4"></a>    Nevents <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
-<span id="cb26-5"><a href="#cb26-5"></a>    Nlar <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>Nlarge</span>
-<span id="cb26-6"><a href="#cb26-6"></a>    MaxMag <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>MaxMag <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
-<span id="cb26-7"><a href="#cb26-7"></a>    samp.id <span class="ot">&lt;-</span> sampid[slice]</span>
-<span id="cb26-8"><a href="#cb26-8"></a>    </span>
-<span id="cb26-9"><a href="#cb26-9"></a>    <span class="co"># we need to bing the synthetics with the observed catalogue </span></span>
-<span id="cb26-10"><a href="#cb26-10"></a>    <span class="co"># for plotting</span></span>
-<span id="cb26-11"><a href="#cb26-11"></a>    cat.df.for.plotting <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
-<span id="cb26-12"><a href="#cb26-12"></a>      syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.df[</span>
-<span id="cb26-13"><a href="#cb26-13"></a>        <span class="fu">which</span>(</span>
-<span id="cb26-14"><a href="#cb26-14"></a>          syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.df<span class="sc">$</span>cat.idx <span class="sc">%in%</span> samp.id), </span>
-<span id="cb26-15"><a href="#cb26-15"></a>        ],</span>
-<span id="cb26-16"><a href="#cb26-16"></a>      <span class="fu">cbind</span>(syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>data[, <span class="fu">c</span>(<span class="st">"ts"</span>, <span class="st">"magnitudes"</span>)],</span>
-<span id="cb26-17"><a href="#cb26-17"></a>        <span class="at">gen =</span> <span class="cn">NA</span>, <span class="at">cat.idx =</span> <span class="st">"observed"</span>, <span class="at">num_events =</span> <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
-<span id="cb26-18"><a href="#cb26-18"></a>        <span class="at">num_large =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, </span>
-<span id="cb26-19"><a href="#cb26-19"></a>        <span class="at">max_mag =</span> <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
-<span id="cb26-20"><a href="#cb26-20"></a>      )</span>
-<span id="cb26-21"><a href="#cb26-21"></a>    )</span>
-<span id="cb26-22"><a href="#cb26-22"></a></span>
-<span id="cb26-23"><a href="#cb26-23"></a>    <span class="co"># plot them</span></span>
-<span id="cb26-24"><a href="#cb26-24"></a>    multi.synth.cat.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(cat.df.for.plotting,</span>
-<span id="cb26-25"><a href="#cb26-25"></a>                                   <span class="fu">aes</span>(ts, magnitudes)) <span class="sc">+</span></span>
-<span id="cb26-26"><a href="#cb26-26"></a>      <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
-<span id="cb26-27"><a href="#cb26-27"></a>      <span class="fu">geom_point</span>(</span>
-<span id="cb26-28"><a href="#cb26-28"></a>        <span class="at">data =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>ht, </span>
-<span id="cb26-29"><a href="#cb26-29"></a>        <span class="at">mapping =</span> <span class="fu">aes</span>(ts, magnitudes), <span class="at">colour =</span> <span class="st">"black"</span></span>
-<span id="cb26-30"><a href="#cb26-30"></a>      ) <span class="sc">+</span></span>
-<span id="cb26-31"><a href="#cb26-31"></a>      <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(cat.idx, num_events, num_large, max_mag), </span>
-<span id="cb26-32"><a href="#cb26-32"></a>                 <span class="at">labeller =</span> <span class="st">'label_both'</span>, <span class="at">ncol =</span> <span class="dv">6</span>)</span>
-<span id="cb26-33"><a href="#cb26-33"></a>    </span>
-<span id="cb26-34"><a href="#cb26-34"></a>    <span class="co"># modelling</span></span>
-<span id="cb26-35"><a href="#cb26-35"></a>    post <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">list</span>(<span class="cn">NULL</span>), samp.id <span class="sc">%&gt;%</span> length)</span>
-<span id="cb26-36"><a href="#cb26-36"></a>    post.par <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="dv">0</span>, (samp.id <span class="sc">%&gt;%</span> length) <span class="sc">*</span> <span class="dv">5</span>), </span>
-<span id="cb26-37"><a href="#cb26-37"></a>                       <span class="at">ncol =</span> <span class="dv">5</span>)</span>
+<span id="cb26-4"><a href="#cb26-4"></a>    <span class="co"># This function aims at fitting an ETAS model on the synthetic catalogues</span></span>
+<span id="cb26-5"><a href="#cb26-5"></a>    <span class="co"># specified in `syn`.</span></span>
+<span id="cb26-6"><a href="#cb26-6"></a>    </span>
+<span id="cb26-7"><a href="#cb26-7"></a>    <span class="co"># Extract characteristics and sample IDs.</span></span>
+<span id="cb26-8"><a href="#cb26-8"></a>    Nevents <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
+<span id="cb26-9"><a href="#cb26-9"></a>    Nlar <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>Nlarge</span>
+<span id="cb26-10"><a href="#cb26-10"></a>    MaxMag <span class="ot">&lt;-</span> syn<span class="sc">$</span>environ<span class="sc">$</span>MaxMag <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
+<span id="cb26-11"><a href="#cb26-11"></a>    samp.id <span class="ot">&lt;-</span> sampid[slice]</span>
+<span id="cb26-12"><a href="#cb26-12"></a>    </span>
+<span id="cb26-13"><a href="#cb26-13"></a>    <span class="co"># Create a data frame of the catalogues to be plotted.</span></span>
+<span id="cb26-14"><a href="#cb26-14"></a>    cat.df.for.plotting <span class="ot">&lt;-</span> <span class="fu">rbind</span>(</span>
+<span id="cb26-15"><a href="#cb26-15"></a>      syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.df[</span>
+<span id="cb26-16"><a href="#cb26-16"></a>        <span class="fu">which</span>(</span>
+<span id="cb26-17"><a href="#cb26-17"></a>          syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.df<span class="sc">$</span>cat.idx <span class="sc">%in%</span> samp.id), </span>
+<span id="cb26-18"><a href="#cb26-18"></a>        ],</span>
+<span id="cb26-19"><a href="#cb26-19"></a>      <span class="fu">cbind</span>(syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>data[, <span class="fu">c</span>(<span class="st">"ts"</span>, <span class="st">"magnitudes"</span>)],</span>
+<span id="cb26-20"><a href="#cb26-20"></a>        <span class="at">gen =</span> <span class="cn">NA</span>, <span class="at">cat.idx =</span> <span class="st">"observed"</span>, <span class="at">num_events =</span> <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
+<span id="cb26-21"><a href="#cb26-21"></a>        <span class="at">num_large =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, </span>
+<span id="cb26-22"><a href="#cb26-22"></a>        <span class="at">max_mag =</span> <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)</span>
+<span id="cb26-23"><a href="#cb26-23"></a>      )</span>
+<span id="cb26-24"><a href="#cb26-24"></a>    )</span>
+<span id="cb26-25"><a href="#cb26-25"></a></span>
+<span id="cb26-26"><a href="#cb26-26"></a>    <span class="co"># Plot synthetic catalogues.</span></span>
+<span id="cb26-27"><a href="#cb26-27"></a>    multi.synth.cat.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(cat.df.for.plotting,</span>
+<span id="cb26-28"><a href="#cb26-28"></a>                                   <span class="fu">aes</span>(ts, magnitudes)) <span class="sc">+</span></span>
+<span id="cb26-29"><a href="#cb26-29"></a>      <span class="fu">geom_point</span>(<span class="at">size =</span> <span class="fl">0.5</span>) <span class="sc">+</span></span>
+<span id="cb26-30"><a href="#cb26-30"></a>      <span class="fu">geom_point</span>(</span>
+<span id="cb26-31"><a href="#cb26-31"></a>        <span class="at">data =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>ht, </span>
+<span id="cb26-32"><a href="#cb26-32"></a>        <span class="at">mapping =</span> <span class="fu">aes</span>(ts, magnitudes), <span class="at">colour =</span> <span class="st">"black"</span></span>
+<span id="cb26-33"><a href="#cb26-33"></a>      ) <span class="sc">+</span></span>
+<span id="cb26-34"><a href="#cb26-34"></a>      <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="fu">vars</span>(cat.idx, num_events, num_large, max_mag), </span>
+<span id="cb26-35"><a href="#cb26-35"></a>                 <span class="at">labeller =</span> <span class="st">'label_both'</span>, <span class="at">ncol =</span> <span class="dv">6</span>)</span>
+<span id="cb26-36"><a href="#cb26-36"></a>    </span>
+<span id="cb26-37"><a href="#cb26-37"></a>    <span class="co"># ETAS model fitting.</span></span>
 <span id="cb26-38"><a href="#cb26-38"></a>    </span>
-<span id="cb26-39"><a href="#cb26-39"></a>    <span class="cf">for</span>(i <span class="cf">in</span> samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len){</span>
-<span id="cb26-40"><a href="#cb26-40"></a>        multi.synth.etas <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">data =</span> </span>
-<span id="cb26-41"><a href="#cb26-41"></a>            syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[samp.id[i]]],</span>
-<span id="cb26-42"><a href="#cb26-42"></a>                                    <span class="at">t1 =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>t1, </span>
-<span id="cb26-43"><a href="#cb26-43"></a>                                    <span class="at">t2 =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>t2)</span>
-<span id="cb26-44"><a href="#cb26-44"></a>        post[[i]] <span class="ot">&lt;-</span> multi.synth.etas<span class="sc">$</span>envir<span class="sc">$</span>post.list</span>
-<span id="cb26-45"><a href="#cb26-45"></a>        post.par[i,] <span class="ot">&lt;-</span> multi.synth.etas<span class="sc">$</span>envir<span class="sc">$</span>post.par</span>
-<span id="cb26-46"><a href="#cb26-46"></a>        </span>
-<span id="cb26-47"><a href="#cb26-47"></a>        post[[i]]<span class="sc">$</span>post.df<span class="sc">$</span>Catalogues <span class="ot">&lt;-</span> </span>
-<span id="cb26-48"><a href="#cb26-48"></a>        <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, Nevents[samp.id[i]],</span>
-<span id="cb26-49"><a href="#cb26-49"></a>              <span class="st">'Events, with'</span>, Nlar[samp.id[i]], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
-<span id="cb26-50"><a href="#cb26-50"></a>              <span class="st">'and the Highest Magnitude is'</span>, MaxMag[samp.id[i]])</span>
-<span id="cb26-51"><a href="#cb26-51"></a>    }</span>
-<span id="cb26-52"><a href="#cb26-52"></a>    </span>
-<span id="cb26-53"><a href="#cb26-53"></a>    df.true.param <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>post.par, </span>
-<span id="cb26-54"><a href="#cb26-54"></a>                        <span class="at">param =</span> <span class="fu">names</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>post.par <span class="sc">%&gt;%</span> as.list))</span>
-<span id="cb26-55"><a href="#cb26-55"></a>    </span>
-<span id="cb26-56"><a href="#cb26-56"></a>    <span class="co"># bind marginal posterior data.frames</span></span>
-<span id="cb26-57"><a href="#cb26-57"></a>    bind.post.df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, </span>
-<span id="cb26-58"><a href="#cb26-58"></a>                            <span class="fu">lapply</span>(samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len,</span>
-<span id="cb26-59"><a href="#cb26-59"></a>                                   \(i) post[[i]]<span class="sc">$</span>post.df))</span>
+<span id="cb26-39"><a href="#cb26-39"></a>    post <span class="ot">&lt;-</span> <span class="fu">rep</span>(<span class="fu">list</span>(<span class="cn">NULL</span>), samp.id <span class="sc">%&gt;%</span> length) <span class="co"># Posterior list.</span></span>
+<span id="cb26-40"><a href="#cb26-40"></a>    post.par <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="fu">rep</span>(<span class="dv">0</span>, (samp.id <span class="sc">%&gt;%</span> length) <span class="sc">*</span> <span class="dv">5</span>), </span>
+<span id="cb26-41"><a href="#cb26-41"></a>                       <span class="at">ncol =</span> <span class="dv">5</span>) <span class="co"># Posterior parameters.</span></span>
+<span id="cb26-42"><a href="#cb26-42"></a>    </span>
+<span id="cb26-43"><a href="#cb26-43"></a>    <span class="cf">for</span>(i <span class="cf">in</span> samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len){</span>
+<span id="cb26-44"><a href="#cb26-44"></a>        <span class="co"># Fit the ETAS model.</span></span>
+<span id="cb26-45"><a href="#cb26-45"></a>        multi.synth.etas <span class="ot">&lt;-</span> <span class="fu">ETAS</span>(<span class="at">data =</span> </span>
+<span id="cb26-46"><a href="#cb26-46"></a>            syn<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[samp.id[i]]],</span>
+<span id="cb26-47"><a href="#cb26-47"></a>                                    <span class="at">t1 =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>t1, </span>
+<span id="cb26-48"><a href="#cb26-48"></a>                                    <span class="at">t2 =</span> syn<span class="sc">$</span>environ<span class="sc">$</span>envir<span class="sc">$</span>t2)</span>
+<span id="cb26-49"><a href="#cb26-49"></a>        </span>
+<span id="cb26-50"><a href="#cb26-50"></a>        <span class="co"># Store the information.</span></span>
+<span id="cb26-51"><a href="#cb26-51"></a>        post[[i]] <span class="ot">&lt;-</span> multi.synth.etas<span class="sc">$</span>envir<span class="sc">$</span>post.list</span>
+<span id="cb26-52"><a href="#cb26-52"></a>        post.par[i,] <span class="ot">&lt;-</span> multi.synth.etas<span class="sc">$</span>envir<span class="sc">$</span>post.par</span>
+<span id="cb26-53"><a href="#cb26-53"></a>        </span>
+<span id="cb26-54"><a href="#cb26-54"></a>        <span class="co"># Legends of the plots.</span></span>
+<span id="cb26-55"><a href="#cb26-55"></a>        post[[i]]<span class="sc">$</span>post.df<span class="sc">$</span>Catalogues <span class="ot">&lt;-</span> </span>
+<span id="cb26-56"><a href="#cb26-56"></a>        <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, Nevents[samp.id[i]],</span>
+<span id="cb26-57"><a href="#cb26-57"></a>              <span class="st">'Events, with'</span>, Nlar[samp.id[i]], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb26-58"><a href="#cb26-58"></a>              <span class="st">'and the Highest Magnitude is'</span>, MaxMag[samp.id[i]])</span>
+<span id="cb26-59"><a href="#cb26-59"></a>    }</span>
 <span id="cb26-60"><a href="#cb26-60"></a>    </span>
-<span id="cb26-61"><a href="#cb26-61"></a>    <span class="co"># plot them</span></span>
-<span id="cb26-62"><a href="#cb26-62"></a>    post.par.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(bind.post.df, </span>
-<span id="cb26-63"><a href="#cb26-63"></a>                            <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
-<span id="cb26-64"><a href="#cb26-64"></a>      <span class="fu">geom_line</span>() <span class="sc">+</span></span>
-<span id="cb26-65"><a href="#cb26-65"></a>      <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="sc">~</span> param, <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
-<span id="cb26-66"><a href="#cb26-66"></a>      <span class="fu">xlab</span>(<span class="st">"param"</span>) <span class="sc">+</span></span>
-<span id="cb26-67"><a href="#cb26-67"></a>      <span class="fu">ylab</span>(<span class="st">"pdf"</span>) <span class="sc">+</span></span>
-<span id="cb26-68"><a href="#cb26-68"></a>      <span class="fu">geom_vline</span>(</span>
-<span id="cb26-69"><a href="#cb26-69"></a>        <span class="at">data =</span> df.true.param,</span>
-<span id="cb26-70"><a href="#cb26-70"></a>        <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">xintercept =</span> x), <span class="at">linetype =</span> <span class="dv">2</span></span>
-<span id="cb26-71"><a href="#cb26-71"></a>      )</span>
-<span id="cb26-72"><a href="#cb26-72"></a></span>
-<span id="cb26-73"><a href="#cb26-73"></a>    <span class="co"># returns the whole environment</span></span>
-<span id="cb26-74"><a href="#cb26-74"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
-<span id="cb26-75"><a href="#cb26-75"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
-<span id="cb26-76"><a href="#cb26-76"></a>}</span>
-<span id="cb26-77"><a href="#cb26-77"></a>mult.synth.fit <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="dv">5</span>), \(i) <span class="fu">synth.model</span>(<span class="at">syn =</span> mult.synth,</span>
-<span id="cb26-78"><a href="#cb26-78"></a>                            <span class="at">slice =</span> <span class="fu">seq</span>(<span class="dv">5</span> <span class="sc">*</span> (i <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="dv">1</span>, <span class="dv">5</span> <span class="sc">*</span> i, <span class="at">by =</span> <span class="dv">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb26-61"><a href="#cb26-61"></a>    <span class="co"># Define a data frame for true parameters.</span></span>
+<span id="cb26-62"><a href="#cb26-62"></a>    df.true.param <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">x =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>post.par, </span>
+<span id="cb26-63"><a href="#cb26-63"></a>                        <span class="at">param =</span> <span class="fu">names</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>post.par <span class="sc">%&gt;%</span> as.list))</span>
+<span id="cb26-64"><a href="#cb26-64"></a>    </span>
+<span id="cb26-65"><a href="#cb26-65"></a>    <span class="co"># Bind marginal posterior data frames.</span></span>
+<span id="cb26-66"><a href="#cb26-66"></a>    bind.post.df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, </span>
+<span id="cb26-67"><a href="#cb26-67"></a>                            <span class="fu">lapply</span>(samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len,</span>
+<span id="cb26-68"><a href="#cb26-68"></a>                                   \(i) post[[i]]<span class="sc">$</span>post.df))</span>
+<span id="cb26-69"><a href="#cb26-69"></a>    </span>
+<span id="cb26-70"><a href="#cb26-70"></a>    <span class="co"># Plot the posterior parameter plots.</span></span>
+<span id="cb26-71"><a href="#cb26-71"></a>    post.par.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(bind.post.df, </span>
+<span id="cb26-72"><a href="#cb26-72"></a>                            <span class="fu">aes</span>(<span class="at">x =</span> x, <span class="at">y =</span> y, <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
+<span id="cb26-73"><a href="#cb26-73"></a>      <span class="fu">geom_line</span>() <span class="sc">+</span></span>
+<span id="cb26-74"><a href="#cb26-74"></a>      <span class="fu">facet_wrap</span>(<span class="at">facets =</span> <span class="sc">~</span> param, <span class="at">scales =</span> <span class="st">"free"</span>) <span class="sc">+</span></span>
+<span id="cb26-75"><a href="#cb26-75"></a>      <span class="fu">xlab</span>(<span class="st">"param"</span>) <span class="sc">+</span></span>
+<span id="cb26-76"><a href="#cb26-76"></a>      <span class="fu">ylab</span>(<span class="st">"pdf"</span>) <span class="sc">+</span></span>
+<span id="cb26-77"><a href="#cb26-77"></a>      <span class="fu">geom_vline</span>(</span>
+<span id="cb26-78"><a href="#cb26-78"></a>        <span class="at">data =</span> df.true.param,</span>
+<span id="cb26-79"><a href="#cb26-79"></a>        <span class="at">mapping =</span> <span class="fu">aes</span>(<span class="at">xintercept =</span> x), <span class="at">linetype =</span> <span class="dv">2</span></span>
+<span id="cb26-80"><a href="#cb26-80"></a>      )</span>
+<span id="cb26-81"><a href="#cb26-81"></a></span>
+<span id="cb26-82"><a href="#cb26-82"></a>    <span class="co"># Return the whole environment.</span></span>
+<span id="cb26-83"><a href="#cb26-83"></a>    environ <span class="ot">&lt;-</span> <span class="fu">as.list</span>(<span class="fu">environment</span>())</span>
+<span id="cb26-84"><a href="#cb26-84"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(environ))</span>
+<span id="cb26-85"><a href="#cb26-85"></a>}</span>
+<span id="cb26-86"><a href="#cb26-86"></a><span class="co"># Fit the model of the sampled organic catalogues.</span></span>
+<span id="cb26-87"><a href="#cb26-87"></a>mult.synth.fit <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="dv">5</span>), \(i) <span class="fu">synth.model</span>(<span class="at">syn =</span> mult.synth,</span>
+<span id="cb26-88"><a href="#cb26-88"></a>                            <span class="at">slice =</span> <span class="fu">seq</span>(<span class="dv">5</span> <span class="sc">*</span> (i <span class="sc">-</span> <span class="dv">1</span>) <span class="sc">+</span> <span class="dv">1</span>, <span class="dv">5</span> <span class="sc">*</span> i, <span class="at">by =</span> <span class="dv">1</span>)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>Synthetic catalogues, time vs magnitudes.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb27"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1"></a>mult.synth.fit[[<span class="dv">1</span>]]<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -884,6 +923,7 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
+<p>Posterior plots of the catalogues.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb32"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1"></a>mult.synth.fit[[<span class="dv">1</span>]]<span class="sc">$</span>environ<span class="sc">$</span>post.par.plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -931,53 +971,69 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
-<p>Analysis on the Behaviours of the Time-between-Events</p>
+</section>
+<section id="analysis-on-the-behaviours-of-the-time-between-events" class="level2">
+<h2 class="anchored" data-anchor-id="analysis-on-the-behaviours-of-the-time-between-events">Analysis on the Behaviours of the Time-between-Events</h2>
+<section id="for-organic-catalogues" class="level3">
+<h3 class="anchored" data-anchor-id="for-organic-catalogues">For Organic Catalogues</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb37"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1"></a>ECDF.interarrival <span class="ot">&lt;-</span> <span class="cf">function</span>(j){</span>
 <span id="cb37-2"><a href="#cb37-2"></a>    </span>
-<span id="cb37-3"><a href="#cb37-3"></a>    samp.id <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>samp.id</span>
-<span id="cb37-4"><a href="#cb37-4"></a>    Nevents <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
-<span id="cb37-5"><a href="#cb37-5"></a>    Nlar <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>Nlar</span>
-<span id="cb37-6"><a href="#cb37-6"></a>    MaxMag <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>MaxMag</span>
-<span id="cb37-7"><a href="#cb37-7"></a>    </span>
-<span id="cb37-8"><a href="#cb37-8"></a>    data.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len, \(i) <span class="fu">data.frame</span>(</span>
-<span id="cb37-9"><a href="#cb37-9"></a>        <span class="at">Time_between_events =</span> </span>
-<span id="cb37-10"><a href="#cb37-10"></a>            mult.synth<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[samp.id[i]]]<span class="sc">$</span>ts <span class="sc">%&gt;%</span></span>
-<span id="cb37-11"><a href="#cb37-11"></a>                sort <span class="sc">%&gt;%</span> diff, </span>
-<span id="cb37-12"><a href="#cb37-12"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, </span>
-<span id="cb37-13"><a href="#cb37-13"></a>                           Nevents[samp.id[i]],</span>
-<span id="cb37-14"><a href="#cb37-14"></a>              <span class="st">'Events, with'</span>, Nlar[samp.id[i]], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
-<span id="cb37-15"><a href="#cb37-15"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
-<span id="cb37-16"><a href="#cb37-16"></a>              MaxMag[samp.id[i]] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>))</span>
-<span id="cb37-17"><a href="#cb37-17"></a>        )</span>
-<span id="cb37-18"><a href="#cb37-18"></a>    )</span>
-<span id="cb37-19"><a href="#cb37-19"></a>    </span>
-<span id="cb37-20"><a href="#cb37-20"></a>    data.list[[<span class="fu">length</span>(samp.id) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb37-21"><a href="#cb37-21"></a>        <span class="at">Time_between_events =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>interarrival, </span>
-<span id="cb37-22"><a href="#cb37-22"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Observed'</span>, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
-<span id="cb37-23"><a href="#cb37-23"></a>              <span class="st">'Events, with'</span>, etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
-<span id="cb37-24"><a href="#cb37-24"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
-<span id="cb37-25"><a href="#cb37-25"></a>              <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
-<span id="cb37-26"><a href="#cb37-26"></a>    </span>
-<span id="cb37-27"><a href="#cb37-27"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, data.list)</span>
-<span id="cb37-28"><a href="#cb37-28"></a>    </span>
-<span id="cb37-29"><a href="#cb37-29"></a>    ECDF.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Time_between_events, </span>
-<span id="cb37-30"><a href="#cb37-30"></a>                                <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
-<span id="cb37-31"><a href="#cb37-31"></a>        <span class="fu">stat_ecdf</span>() <span class="sc">+</span> </span>
-<span id="cb37-32"><a href="#cb37-32"></a>        <span class="fu">xlab</span>(<span class="st">'Time between Events'</span>) <span class="sc">+</span></span>
-<span id="cb37-33"><a href="#cb37-33"></a>      <span class="fu">ylab</span>(<span class="st">'Empirical Cumulative Probability'</span>)</span>
+<span id="cb37-3"><a href="#cb37-3"></a>    <span class="co"># This function aims at sketching ECDF and KS plots of the </span></span>
+<span id="cb37-4"><a href="#cb37-4"></a>    <span class="co"># organic catalogues with a baseline of the L'Aquila sequence.</span></span>
+<span id="cb37-5"><a href="#cb37-5"></a>    </span>
+<span id="cb37-6"><a href="#cb37-6"></a>    <span class="co"># Extract characteristics and sample IDs.</span></span>
+<span id="cb37-7"><a href="#cb37-7"></a>    samp.id <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>samp.id</span>
+<span id="cb37-8"><a href="#cb37-8"></a>    Nevents <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
+<span id="cb37-9"><a href="#cb37-9"></a>    Nlar <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>Nlar</span>
+<span id="cb37-10"><a href="#cb37-10"></a>    MaxMag <span class="ot">&lt;-</span> mult.synth.fit[[j]]<span class="sc">$</span>environ<span class="sc">$</span>MaxMag</span>
+<span id="cb37-11"><a href="#cb37-11"></a>    </span>
+<span id="cb37-12"><a href="#cb37-12"></a>    <span class="co"># Create a list of data frames specifying the time-between-events</span></span>
+<span id="cb37-13"><a href="#cb37-13"></a>    <span class="co"># of each catalogue.</span></span>
+<span id="cb37-14"><a href="#cb37-14"></a>    data.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len, \(i) <span class="fu">data.frame</span>(</span>
+<span id="cb37-15"><a href="#cb37-15"></a>        <span class="at">Time_between_events =</span> </span>
+<span id="cb37-16"><a href="#cb37-16"></a>            mult.synth<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[samp.id[i]]]<span class="sc">$</span>ts <span class="sc">%&gt;%</span></span>
+<span id="cb37-17"><a href="#cb37-17"></a>                sort <span class="sc">%&gt;%</span> diff, </span>
+<span id="cb37-18"><a href="#cb37-18"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, </span>
+<span id="cb37-19"><a href="#cb37-19"></a>                           Nevents[samp.id[i]],</span>
+<span id="cb37-20"><a href="#cb37-20"></a>              <span class="st">'Events, with'</span>, Nlar[samp.id[i]], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb37-21"><a href="#cb37-21"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
+<span id="cb37-22"><a href="#cb37-22"></a>              MaxMag[samp.id[i]] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>))</span>
+<span id="cb37-23"><a href="#cb37-23"></a>        )</span>
+<span id="cb37-24"><a href="#cb37-24"></a>    )</span>
+<span id="cb37-25"><a href="#cb37-25"></a>    </span>
+<span id="cb37-26"><a href="#cb37-26"></a>    <span class="co"># Create a data frame specifying the time-between-events</span></span>
+<span id="cb37-27"><a href="#cb37-27"></a>    <span class="co"># of the real sequence.</span></span>
+<span id="cb37-28"><a href="#cb37-28"></a>    data.list[[<span class="fu">length</span>(samp.id) <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb37-29"><a href="#cb37-29"></a>        <span class="at">Time_between_events =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>interarrival, </span>
+<span id="cb37-30"><a href="#cb37-30"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Observed'</span>, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
+<span id="cb37-31"><a href="#cb37-31"></a>              <span class="st">'Events, with'</span>, etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb37-32"><a href="#cb37-32"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
+<span id="cb37-33"><a href="#cb37-33"></a>              <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
 <span id="cb37-34"><a href="#cb37-34"></a>    </span>
-<span id="cb37-35"><a href="#cb37-35"></a>    KS.plot <span class="ot">&lt;-</span> samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len <span class="sc">%&gt;%</span> <span class="fu">lapply</span>(</span>
-<span id="cb37-36"><a href="#cb37-36"></a>        \(i) data.list[[i]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span> </span>
-<span id="cb37-37"><a href="#cb37-37"></a>            <span class="fu">inla.ks.plot</span>(</span>
-<span id="cb37-38"><a href="#cb37-38"></a>                data.list[[samp.id <span class="sc">%&gt;%</span> length <span class="sc">+</span> <span class="dv">1</span>]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span></span>
-<span id="cb37-39"><a href="#cb37-39"></a>                             ecdf))</span>
-<span id="cb37-40"><a href="#cb37-40"></a>    </span>
-<span id="cb37-41"><a href="#cb37-41"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(ECDF.plot, KS.plot))</span>
-<span id="cb37-42"><a href="#cb37-42"></a>}</span>
-<span id="cb37-43"><a href="#cb37-43"></a></span>
-<span id="cb37-44"><a href="#cb37-44"></a>ecdf_interarrival <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="dv">5</span>), \(j) <span class="fu">ECDF.interarrival</span>(j))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb37-35"><a href="#cb37-35"></a>    <span class="co"># Bind the rows of the data frames.</span></span>
+<span id="cb37-36"><a href="#cb37-36"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, data.list)</span>
+<span id="cb37-37"><a href="#cb37-37"></a>    </span>
+<span id="cb37-38"><a href="#cb37-38"></a>    <span class="co"># Plot ECDF.</span></span>
+<span id="cb37-39"><a href="#cb37-39"></a>    ECDF.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Time_between_events, </span>
+<span id="cb37-40"><a href="#cb37-40"></a>                                <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
+<span id="cb37-41"><a href="#cb37-41"></a>        <span class="fu">stat_ecdf</span>() <span class="sc">+</span> </span>
+<span id="cb37-42"><a href="#cb37-42"></a>        <span class="fu">xlab</span>(<span class="st">'Time between Events'</span>) <span class="sc">+</span></span>
+<span id="cb37-43"><a href="#cb37-43"></a>      <span class="fu">ylab</span>(<span class="st">'Empirical Cumulative Probability'</span>)</span>
+<span id="cb37-44"><a href="#cb37-44"></a>    </span>
+<span id="cb37-45"><a href="#cb37-45"></a>    <span class="co"># Plot KS.</span></span>
+<span id="cb37-46"><a href="#cb37-46"></a>    KS.plot <span class="ot">&lt;-</span> samp.id <span class="sc">%&gt;%</span> length <span class="sc">%&gt;%</span> seq_len <span class="sc">%&gt;%</span> <span class="fu">lapply</span>(</span>
+<span id="cb37-47"><a href="#cb37-47"></a>        \(i) data.list[[i]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span> </span>
+<span id="cb37-48"><a href="#cb37-48"></a>            <span class="fu">inla.ks.plot</span>(</span>
+<span id="cb37-49"><a href="#cb37-49"></a>                data.list[[samp.id <span class="sc">%&gt;%</span> length <span class="sc">+</span> <span class="dv">1</span>]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span></span>
+<span id="cb37-50"><a href="#cb37-50"></a>                             ecdf))</span>
+<span id="cb37-51"><a href="#cb37-51"></a>    </span>
+<span id="cb37-52"><a href="#cb37-52"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(ECDF.plot, KS.plot))</span>
+<span id="cb37-53"><a href="#cb37-53"></a>}</span>
+<span id="cb37-54"><a href="#cb37-54"></a></span>
+<span id="cb37-55"><a href="#cb37-55"></a>ecdf_interarrival <span class="ot">&lt;-</span> <span class="fu">lapply</span>(<span class="fu">seq_len</span>(<span class="dv">5</span>), \(j) <span class="fu">ECDF.interarrival</span>(j))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>ECDF plots for organic catalogues.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb38"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1"></a>ecdf_interarrival[[<span class="dv">1</span>]]<span class="sc">$</span>ECDF.plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -1025,55 +1081,81 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
+<p>An example KS test plot for an organic catalogue.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb43"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">'ks_org_best.png'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="ks_org_best.png" class="img-fluid figure-img" width="496"></p>
+<p></p><figcaption class="figure-caption">An Example KS Plot of Time between Events, without Imposing History</figcaption><p></p>
+</figure>
 </div>
+</div>
+</div>
+</section>
+<section id="for-catalogues-with-imposed-history" class="level3">
+<h3 class="anchored" data-anchor-id="for-catalogues-with-imposed-history">For Catalogues with Imposed History</h3>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb44"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1"></a>ECDF.interarrival.imp <span class="ot">&lt;-</span> <span class="cf">function</span>(<span class="at">n.cat =</span> <span class="dv">10</span>, <span class="at">data =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>data){</span>
 <span id="cb44-2"><a href="#cb44-2"></a>    </span>
-<span id="cb44-3"><a href="#cb44-3"></a>    mult.synth.imp <span class="ot">&lt;-</span> <span class="fu">mult.synth.ETAS</span>(<span class="at">n.cat =</span> n.cat, </span>
-<span id="cb44-4"><a href="#cb44-4"></a>                                      <span class="at">ht =</span> data[<span class="fu">which.max</span>(data<span class="sc">$</span>magnitudes),])</span>
-<span id="cb44-5"><a href="#cb44-5"></a>    </span>
-<span id="cb44-6"><a href="#cb44-6"></a>    Nevents <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
-<span id="cb44-7"><a href="#cb44-7"></a>    Nlar <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>Nlar</span>
-<span id="cb44-8"><a href="#cb44-8"></a>    MaxMag <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>MaxMag</span>
-<span id="cb44-9"><a href="#cb44-9"></a>    </span>
-<span id="cb44-10"><a href="#cb44-10"></a>    data.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(n.cat <span class="sc">%&gt;%</span> seq_len, \(i) <span class="fu">data.frame</span>(</span>
-<span id="cb44-11"><a href="#cb44-11"></a>        <span class="at">Time_between_events =</span> </span>
-<span id="cb44-12"><a href="#cb44-12"></a>            mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[i]]<span class="sc">$</span>ts <span class="sc">%&gt;%</span></span>
-<span id="cb44-13"><a href="#cb44-13"></a>                sort <span class="sc">%&gt;%</span> diff, </span>
-<span id="cb44-14"><a href="#cb44-14"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, Nevents[i],</span>
-<span id="cb44-15"><a href="#cb44-15"></a>              <span class="st">'Events, with'</span>, Nlar[i], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
-<span id="cb44-16"><a href="#cb44-16"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
-<span id="cb44-17"><a href="#cb44-17"></a>              MaxMag[i] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>))</span>
-<span id="cb44-18"><a href="#cb44-18"></a>        )</span>
-<span id="cb44-19"><a href="#cb44-19"></a>    )</span>
-<span id="cb44-20"><a href="#cb44-20"></a>    </span>
-<span id="cb44-21"><a href="#cb44-21"></a>    data.list[[n.cat <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
-<span id="cb44-22"><a href="#cb44-22"></a>        <span class="at">Time_between_events =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>interarrival, </span>
-<span id="cb44-23"><a href="#cb44-23"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Observed'</span>, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
-<span id="cb44-24"><a href="#cb44-24"></a>              <span class="st">'Events, with'</span>, etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
-<span id="cb44-25"><a href="#cb44-25"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
-<span id="cb44-26"><a href="#cb44-26"></a>              <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
-<span id="cb44-27"><a href="#cb44-27"></a>    </span>
-<span id="cb44-28"><a href="#cb44-28"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, data.list)</span>
-<span id="cb44-29"><a href="#cb44-29"></a>    </span>
-<span id="cb44-30"><a href="#cb44-30"></a>    ECDF.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Time_between_events, </span>
-<span id="cb44-31"><a href="#cb44-31"></a>                                <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
-<span id="cb44-32"><a href="#cb44-32"></a>        <span class="fu">stat_ecdf</span>() <span class="sc">+</span> </span>
-<span id="cb44-33"><a href="#cb44-33"></a>        <span class="fu">xlab</span>(<span class="st">'Time between Events'</span>) <span class="sc">+</span></span>
-<span id="cb44-34"><a href="#cb44-34"></a>      <span class="fu">ylab</span>(<span class="st">'Empirical Cumulative Probability'</span>)</span>
-<span id="cb44-35"><a href="#cb44-35"></a>    </span>
-<span id="cb44-36"><a href="#cb44-36"></a>    KS.plot <span class="ot">&lt;-</span> n.cat <span class="sc">%&gt;%</span> seq_len <span class="sc">%&gt;%</span> <span class="fu">lapply</span>(</span>
-<span id="cb44-37"><a href="#cb44-37"></a>        \(i) data.list[[i]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span> </span>
-<span id="cb44-38"><a href="#cb44-38"></a>            <span class="fu">inla.ks.plot</span>(data.list[[n.cat <span class="sc">+</span> <span class="dv">1</span>]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span></span>
-<span id="cb44-39"><a href="#cb44-39"></a>                             ecdf))</span>
-<span id="cb44-40"><a href="#cb44-40"></a>    </span>
-<span id="cb44-41"><a href="#cb44-41"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(ECDF.plot, KS.plot))</span>
-<span id="cb44-42"><a href="#cb44-42"></a>}</span>
-<span id="cb44-43"><a href="#cb44-43"></a></span>
-<span id="cb44-44"><a href="#cb44-44"></a>ecdf_interarrival_imp <span class="ot">&lt;-</span> <span class="fu">ECDF.interarrival.imp</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<span id="cb44-3"><a href="#cb44-3"></a>    <span class="co"># This function aims at sketching ECDF and KS plots of the catalogues </span></span>
+<span id="cb44-4"><a href="#cb44-4"></a>    <span class="co"># with the maximum-magnitude event imposed with a baseline of the </span></span>
+<span id="cb44-5"><a href="#cb44-5"></a>    <span class="co"># L'Aquila sequence.</span></span>
+<span id="cb44-6"><a href="#cb44-6"></a>    </span>
+<span id="cb44-7"><a href="#cb44-7"></a>    <span class="co"># Generate synthetic catalogues, imposing history.</span></span>
+<span id="cb44-8"><a href="#cb44-8"></a>    mult.synth.imp <span class="ot">&lt;-</span> <span class="fu">mult.synth.ETAS</span>(<span class="at">n.cat =</span> n.cat, </span>
+<span id="cb44-9"><a href="#cb44-9"></a>                                      <span class="at">ht =</span> data[<span class="fu">which.max</span>(data<span class="sc">$</span>magnitudes),])</span>
+<span id="cb44-10"><a href="#cb44-10"></a>    </span>
+<span id="cb44-11"><a href="#cb44-11"></a>    <span class="co"># Extract characteristics and sample IDs.</span></span>
+<span id="cb44-12"><a href="#cb44-12"></a>    Nevents <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>Nevents</span>
+<span id="cb44-13"><a href="#cb44-13"></a>    Nlar <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>Nlar</span>
+<span id="cb44-14"><a href="#cb44-14"></a>    MaxMag <span class="ot">&lt;-</span> mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>MaxMag</span>
+<span id="cb44-15"><a href="#cb44-15"></a>    </span>
+<span id="cb44-16"><a href="#cb44-16"></a>    <span class="co"># Create a list of data frames specifying the time-between-events</span></span>
+<span id="cb44-17"><a href="#cb44-17"></a>    <span class="co"># of each catalogue.</span></span>
+<span id="cb44-18"><a href="#cb44-18"></a>    data.list <span class="ot">&lt;-</span> <span class="fu">lapply</span>(n.cat <span class="sc">%&gt;%</span> seq_len, \(i) <span class="fu">data.frame</span>(</span>
+<span id="cb44-19"><a href="#cb44-19"></a>        <span class="at">Time_between_events =</span> </span>
+<span id="cb44-20"><a href="#cb44-20"></a>            mult.synth.imp<span class="sc">$</span>environ<span class="sc">$</span>multi.synth.cat.list.df[[i]]<span class="sc">$</span>ts <span class="sc">%&gt;%</span></span>
+<span id="cb44-21"><a href="#cb44-21"></a>                sort <span class="sc">%&gt;%</span> diff, </span>
+<span id="cb44-22"><a href="#cb44-22"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Random Catalogue'</span>, i, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, Nevents[i],</span>
+<span id="cb44-23"><a href="#cb44-23"></a>              <span class="st">'Events, with'</span>, Nlar[i], <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb44-24"><a href="#cb44-24"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
+<span id="cb44-25"><a href="#cb44-25"></a>              MaxMag[i] <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>))</span>
+<span id="cb44-26"><a href="#cb44-26"></a>        )</span>
+<span id="cb44-27"><a href="#cb44-27"></a>    )</span>
+<span id="cb44-28"><a href="#cb44-28"></a>    </span>
+<span id="cb44-29"><a href="#cb44-29"></a>    <span class="co"># Create a data frame specifying the time-between-events</span></span>
+<span id="cb44-30"><a href="#cb44-30"></a>    <span class="co"># of the real sequence.</span></span>
+<span id="cb44-31"><a href="#cb44-31"></a>    data.list[[n.cat <span class="sc">+</span> <span class="dv">1</span>]] <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb44-32"><a href="#cb44-32"></a>        <span class="at">Time_between_events =</span> etas<span class="sc">$</span>envir<span class="sc">$</span>interarrival, </span>
+<span id="cb44-33"><a href="#cb44-33"></a>        <span class="at">Catalogues =</span> <span class="fu">paste</span>(<span class="st">'Observed'</span>, <span class="st">':</span><span class="sc">\n</span><span class="st">'</span>, <span class="fu">nrow</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data),</span>
+<span id="cb44-34"><a href="#cb44-34"></a>              <span class="st">'Events, with'</span>, etas<span class="sc">$</span>envir<span class="sc">$</span>Nlarge, <span class="st">'Large Events,</span><span class="sc">\n</span><span class="st">'</span>,</span>
+<span id="cb44-35"><a href="#cb44-35"></a>              <span class="st">'and the Highest Magnitude is'</span>, </span>
+<span id="cb44-36"><a href="#cb44-36"></a>              <span class="fu">max</span>(etas<span class="sc">$</span>envir<span class="sc">$</span>data<span class="sc">$</span>magnitudes) <span class="sc">%&gt;%</span> <span class="fu">round</span>(<span class="dv">2</span>)))</span>
+<span id="cb44-37"><a href="#cb44-37"></a>    </span>
+<span id="cb44-38"><a href="#cb44-38"></a>    </span>
+<span id="cb44-39"><a href="#cb44-39"></a>    <span class="co"># Bind the rows of the data frames.</span></span>
+<span id="cb44-40"><a href="#cb44-40"></a>    df <span class="ot">&lt;-</span> <span class="fu">do.call</span>(rbind, data.list)</span>
+<span id="cb44-41"><a href="#cb44-41"></a>    </span>
+<span id="cb44-42"><a href="#cb44-42"></a>    <span class="co">#Plot ECDF.</span></span>
+<span id="cb44-43"><a href="#cb44-43"></a>    ECDF.plot <span class="ot">&lt;-</span> <span class="fu">ggplot</span>(df, <span class="fu">aes</span>(<span class="at">x =</span> Time_between_events, </span>
+<span id="cb44-44"><a href="#cb44-44"></a>                                <span class="at">colour =</span> Catalogues)) <span class="sc">+</span></span>
+<span id="cb44-45"><a href="#cb44-45"></a>        <span class="fu">stat_ecdf</span>() <span class="sc">+</span> </span>
+<span id="cb44-46"><a href="#cb44-46"></a>        <span class="fu">xlab</span>(<span class="st">'Time between Events'</span>) <span class="sc">+</span></span>
+<span id="cb44-47"><a href="#cb44-47"></a>      <span class="fu">ylab</span>(<span class="st">'Empirical Cumulative Probability'</span>)</span>
+<span id="cb44-48"><a href="#cb44-48"></a>    </span>
+<span id="cb44-49"><a href="#cb44-49"></a>    KS.plot <span class="ot">&lt;-</span> n.cat <span class="sc">%&gt;%</span> seq_len <span class="sc">%&gt;%</span> <span class="fu">lapply</span>(</span>
+<span id="cb44-50"><a href="#cb44-50"></a>        \(i) data.list[[i]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span> </span>
+<span id="cb44-51"><a href="#cb44-51"></a>            <span class="fu">inla.ks.plot</span>(data.list[[n.cat <span class="sc">+</span> <span class="dv">1</span>]]<span class="sc">$</span>Time_between_events <span class="sc">%&gt;%</span></span>
+<span id="cb44-52"><a href="#cb44-52"></a>                             ecdf))</span>
+<span id="cb44-53"><a href="#cb44-53"></a>    </span>
+<span id="cb44-54"><a href="#cb44-54"></a>    <span class="fu">return</span>(tibble<span class="sc">::</span><span class="fu">lst</span>(ECDF.plot, KS.plot))</span>
+<span id="cb44-55"><a href="#cb44-55"></a>}</span>
+<span id="cb44-56"><a href="#cb44-56"></a></span>
+<span id="cb44-57"><a href="#cb44-57"></a>ecdf_interarrival_imp <span class="ot">&lt;-</span> <span class="fu">ECDF.interarrival.imp</span>()</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
+<p>ECDF plots for catalogues imposing history.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb45"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1"></a>ecdf_interarrival_imp<span class="sc">$</span>ECDF.plot</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 <div class="cell-output-display">
@@ -1085,9 +1167,19 @@ code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warni
 </div>
 </div>
 </div>
+<p>An example KS test plot for a catalogue imposing history.</p>
 <div class="cell">
 <div class="sourceCode cell-code" id="cb46"><pre class="sourceCode numberSource r number-lines code-with-copy"><code class="sourceCode r"><span id="cb46-1"><a href="#cb46-1"></a>knitr<span class="sc">::</span><span class="fu">include_graphics</span>(<span class="st">'ks_imp_best.png'</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<div class="quarto-figure quarto-figure-center">
+<figure class="figure">
+<p><img src="ks_imp_best.png" class="img-fluid figure-img" width="508"></p>
+<p></p><figcaption class="figure-caption">An Example KS Plot of Time between Events, Imposing History</figcaption><p></p>
+</figure>
 </div>
+</div>
+</div>
+</section>
 </section>
 
 </main>

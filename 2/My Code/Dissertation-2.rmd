@@ -1,6 +1,6 @@
 ---
-title: "Earthquake Forecasting"
-subtitle: "Dissertation Project 2"
+title: "Mimicking L'Aquila: Capturing Key Components of the Earthquake Sequence"
+subtitle: "Dissertation Project 2, Supervised by Dr. Finn Lindgren and Dr. Daniel Paulin"
 author: "Robin Lin s2435943"
 date: "today"
 date-format: "MMMM YYYY"
@@ -96,10 +96,10 @@ INLA::inla.setOption(num.threads = num.cores)
 
 ## Prior Distributions
 
-Copula transformations and inverse copula transformations are set.
+Prior distributions of the parameters are set up based on copula transformations.
 
 ```{r, eval = !file.exists('Dissertation.RData')}
-# set copula transformations list
+# Copula transformations.
 link.f <- list(
   mu = \(x) gamma_t(x, .3, .6),
   K = \(x) unif_t(x, 0, 10),
@@ -108,7 +108,7 @@ link.f <- list(
   p = \(x) unif_t(x, 1, 10)
 )
 
-# set inverse copula transformations list
+# Inverse copula transformations.
 inv.link.f <- list(
   mu = \(x) inv_gamma_t(x, .3, .6),
   K = \(x) inv_unif_t(x, 0, 10),
@@ -118,17 +118,18 @@ inv.link.f <- list(
 )
 ```
 
-The prior distributions are sketched as follows.
+The prior distributions are sketched.
 
 ```{r, eval = !file.exists('Dissertation.RData')}
-# obtain sample from standard normal distribution
+# Sample from standard normal distribution.
 X <- rnorm(1000)
-# apply copula transformations
+
+# Copula transformations.
 gamma.X <- gamma_t(X, .3, .6)
 unif.X <- unif_t(X, 0, 10)
 unif.X.2 <- unif_t(X, 1, 10)
 
-# build data.frame for plotting
+# Data frame for plotting.
 df.to.plot <- rbind(
   data.frame(
     value = gamma.X,
@@ -146,29 +147,24 @@ df.to.plot <- rbind(
 ```
 
 ```{r, fig.cap = "Prior Distributions of the Parameters"}
-# plot them
+# Plot the priors.
 ggplot(df.to.plot, aes(value)) +
   geom_density() +
   theme_bw() +
   facet_wrap(facets = ~ distribution, scales = "free")
 ```
 
-Italy
+## HORUS Data and L'Aquila Sequence
 
 ```{r, eval = !file.exists('Dissertation.RData')}
-# transform time string in Date object
+# Transform HORUS time string in `Date` object, using `UTC` time zone.
 horus$time_date <- as.POSIXct(
   horus$time_string,
   format = "%Y-%m-%dT%H:%M:%OS",
   tz = "UTC"
 )
-# There may be some incorrectly registered data-times in the original data set,
-# that as.POSIXct() can't convert, depending on the system.
-# These should ideally be corrected, but for now, we just remove the rows that
-# couldn't be converted.
-# horus <- na.omit(horus)
 
-# set up parameters for selection
+# Extract the L'Aquila sequence.
 start.date <- as.POSIXct("2009-01-01T00:00:00", 
                          format = "%Y-%m-%dT%H:%M:%OS")
 end.date <- as.POSIXct("2010-01-01T00:00:00", format = "%Y-%m-%dT%H:%M:%OS")
@@ -176,9 +172,9 @@ min.longitude <- 10.5
 max.longitude <- 16
 min.latitude <- 40.5
 max.latitude <- 45
-M0 <- 2.5
+M0 <- 2.5 # Magnitude Cutoff.
 
-# set up conditions for selection
+# Conditions of selection.
 aquila.sel <- (horus$time_date >= start.date) &
   (horus$time_date < end.date) &
   (horus$lon >= min.longitude) &
@@ -187,9 +183,11 @@ aquila.sel <- (horus$time_date >= start.date) &
   (horus$lat <= max.latitude) &
   (horus$M >= M0)
 
-# select
+# L'Aquila sequence.
 aquila <- horus[aquila.sel, ]
 ```
+
+Plot the map showing earthquake in Italy in 2009. Magnitudes: 3-5(black dots), 5-6(orange dots), $\geq 6$(red dot)
 
 ```{r, eval = !file.exists('Dissertation.RData')}
 italy.map <- ne_countries(country = 'Italy', returnclass = "sf", 
@@ -200,7 +198,7 @@ aquila.sf <- st_as_sf(aquila,
                      crs = st_crs('EPSG:4326'))
 ```
 
-```{r, fig.cap = "Italian earthquakes in 2009"}
+```{r, fig.cap = "Italian Earthquakes in 2009"}
 ggplot() +
   geom_sf(data = aquila.sf[aquila$M > 3,], size = 0.8) +
   geom_sf(data = italy.map, fill = alpha("lightgrey", 0), colour = 'green',
@@ -210,14 +208,20 @@ ggplot() +
   ggtitle("Map of event locations")
 ```
 
-```{r, fig.cap = "L'Aquila seismic sequence, times versus magnitudes"}
+L'Aquila sequence, time versus magnitudes.
+
+```{r, fig.cap = "L'Aquila Seismic Sequence, times versus magnitudes"}
 ggplot(aquila, aes(time_date, M)) +
   geom_point() +
   theme_bw()
 ```
 
+## Other Setups before Modelling
+
+L'Aquila data frame.
+
 ```{r, eval = !file.exists('Dissertation.RData')}
-# set up data.frame for model fitting
+# Data frame of L'Aquila.
 aquila.bru <- data.frame(
   ts = as.numeric(
     difftime(aquila$time_date, start.date, units = "days")
@@ -227,8 +231,10 @@ aquila.bru <- data.frame(
 )
 ```
 
+Initial values.
+
 ```{r, eval = !file.exists('Dissertation.RData')}
-# set up list of initial values
+# Initial values.
 th.init <- list(
   th.mu = inv.link.f$mu(.5),
   th.K = inv.link.f$K(.1),
@@ -238,23 +244,27 @@ th.init <- list(
 )
 ```
 
-```{r, eval = !file.exists('Dissertation.RData')}
-# set starting and time of the time interval used for model fitting. 
-# In this case, we use the interval covered by the data.
-T1 <- 0
-T2 <- max(aquila.bru$ts) + .2 # Use max(..., na.rm = TRUE) if there may 
-# still be NAs here
-```
+Start and end time points.
 
 ```{r, eval = !file.exists('Dissertation.RData')}
-# set up list of bru options
+# Set starting and time of the time interval used for model fitting. 
+# In this case, we use the interval covered by the data.
+T1 <- 0
+T2 <- max(aquila.bru$ts) + .2 
+```
+
+Bru options.
+
+```{r, eval = !file.exists('Dissertation.RData')}
+# Set up list of bru options.
 bru.opt.list <- list(
-  bru_verbose = 3, # type of visual output
-  bru_max_iter = 70, # maximum number of iterations
-  # bru_method = list(max_step = 0.5),
-  bru_initial = th.init # parameters' initial values
+  bru_verbose = 3, # Type of visual output.
+  bru_max_iter = 70, # Maximum number of iterations.
+  bru_initial = th.init # Initial values.
 )
 ```
+
+## ETAS Model
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2, 
@@ -264,10 +274,13 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
                  t.end.tri.post = 5, t.end.tri.prior = 10, 
                  t.end.omori.post = 5, t.end.omori.prior = 5){
     
-    # maximum likelihood estimator for beta
+    # This function aims at constructing the ETAS model, and returns a list of
+    # modelling information.
+    
+    # Maximum likelihood estimator for β.
     beta.p <- 1 / (mean(data$magnitudes) - m0)
     
-    # fit the model
+    # Fit the model
     model.fit <- Temporal.ETAS(
       total.data = data,
       M0 = m0,
@@ -280,19 +293,19 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       bru.opt = Bru.opt.list
     )
     
-    # create input list to explore model output
+    # Create input list to explore model output.
     input_list <- list(
       model.fit = model.fit,
       link.functions = Link.f
     )
     
-    # get marginal posterior information
+    # Get marginal posterior information.
     post.list <- get_posterior_param(input.list = input_list)
     
-    # plot marginal posteriors
+    # Plot marginal posteriors.
     postplot <- post.list$post.plot
     
-    # posterior sampling
+    # Posterior sampling.
     post.samp <- post_sampling(
       input.list = input_list,
       n.samp = n.samp,
@@ -300,10 +313,10 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       ncore = num.cores
     )
     
-    # taking the averages of the posterior parameter estimates
+    # Take the averages of the posterior parameter estimates.
     post.par <- apply(post.samp, 2, mean)
     
-    # pair plot
+    # Pair plot.
     pair.plot <- post_pairs_plot(
       post.samp = post.samp,
       input.list = NULL,
@@ -312,35 +325,35 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
     )
     pairplot <- pair.plot$pair.plot
     
-    # set additional elements of the list
+    # Set additional elements of the list.
     input_list$T12 <- c(t1, t2)
     input_list$M0 <- m0
     input_list$catalog.bru <- data
     
-    # posterior number of events
+    # Posterior number of events.
     N.post <- get_posterior_N(input.list = input_list)
     Npostplot <- N.post$post.plot
     Npostmean <- N.post$post.df[which.max(N.post$post.df$mean), 1] 
     
-    # number of large events
+    # Number of large events.
     large_events <- data[data$magnitudes >= mag,]
     Nlarge <- nrow(large_events)
     
-    # mean absolute distance of the differences in magnitudes
+    # Mean absolute distance of the differences in magnitudes.
     diff_mag <- diff(data$magnitudes)
     abs_dist_mag <- mean(abs(diff_mag))
     
-    # mean absolute distance of the inter-arrival time 
+    # Mean absolute distance of the inter-arrival time. 
     interarrival <- diff(data$ts)
     abs_dist_int <- mean(abs(interarrival))
     
-    # check if overdispersion occurs
+    # Check if over-dispersion occurs.
     m_int_time <- mean(interarrival)
     v_int_time <- var(interarrival)
     overdisp <- m_int_time ^ 2 < v_int_time
     
-    # triggering function plots
-    # posterior
+    # Triggering function plots.
+    # Posterior plot.
     triplotpost <- triggering_fun_plot(
       input.list = input_list,
       post.samp = post.samp,
@@ -348,34 +361,36 @@ ETAS <- function(data = aquila.bru, m0 = M0, t1 = T1, t2 = T2,
       t.end = t.end.tri.post, n.breaks = n.breaks
     )
     
-    # prior
+    # Prior plot.
     triplotprior <- triggering_fun_plot_prior(input.list = input_list, 
                               magnitude = mag, n.samp = n.samp, 
                               t.end = t.end.tri.prior)
     
-    # omori plots
-    # posterior
+    # Omori plots.
+    # Posterior plot.
     omoripost <- omori_plot_posterior(input.list = input_list, 
                          post.samp = post.samp, 
                          n.samp = NULL, t.end = t.end.omori.post)
     
-    # prior
+    # Prior plot.
     omoriprior <- omori_plot_prior(input.list = input_list, 
                                    n.samp = n.samp, 
                                     t.end = t.end.omori.prior)
     
-    # returns the whole environment
+    # Return the whole environment.
     envir <- as.list(environment())
     return(tibble::lst(envir))
 }
 etas <- ETAS()
 ```
 
-```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence"}
+Pair plot.
+
+```{r, fig.cap = "Pair Plot for Parameters of the L'Aquila Sequence"}
 etas$envir$pairplot
 ```
 
-Effect of mis-specifying parameters
+## Effects of mis-specifying parameters
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 Copula <- function(mu_a = .3, mu_b = .6, 
@@ -384,7 +399,10 @@ Copula <- function(mu_a = .3, mu_b = .6,
                    c_a = 0, c_b = 10,
                    p_a = 1, p_b = 10){
     
-    # set copula transformations list
+    # This function aims at changing parameters of the prior distributions,
+    # and outputs a list of all the information.
+    
+    # Copula transformations.
     linkf <- list(
       mu = \(x) gamma_t(x, mu_a, mu_b),
       K = \(x) unif_t(x, k_a, k_b),
@@ -393,7 +411,7 @@ Copula <- function(mu_a = .3, mu_b = .6,
       p = \(x) unif_t(x, p_a, p_b)
     )
     
-    # set inverse copula transformations list
+    # Inverse copula transformations.
     invlinkf <- list(
       mu = \(x) inv_gamma_t(x, mu_a, mu_b),
       K = \(x) inv_unif_t(x, k_a, k_b),
@@ -402,7 +420,7 @@ Copula <- function(mu_a = .3, mu_b = .6,
       p = \(x) inv_unif_t(x, p_a, p_b)
     )
     
-    # set up list of initial values
+    # Initial values.
     thinit <- list(
       th.mu = invlinkf$mu(.5),
       th.K = invlinkf$K(1),
@@ -411,24 +429,26 @@ Copula <- function(mu_a = .3, mu_b = .6,
       th.p = invlinkf$p(5)
     )
     
-    # set up list of bru options
-    bruoptlist <- list(
-      bru_verbose = 3, # type of visual output
-      bru_max_iter = 70, # maximum number of iterations
-      # bru_method = list(max_step = 0.5),
-      bru_initial = thinit # parameters' initial values
+    # Set up list of bru options.
+    bru.opt.list <- list(
+      bru_verbose = 3, # Type of visual output.
+      bru_max_iter = 70, # Maximum number of iterations.
+      bru_initial = th.init # Initial values.
     )
     
-    # returns the whole environment
+    # Returns the whole environment.
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
+
+# Mis-specify the parameters.
 cop_mis_mu <- Copula(mu_a = 5, mu_b = 1)
 cop_mis_K <- Copula(k_a = .99, k_b = 1.01)
 cop_mis_alp <- Copula(mu_a = .99, mu_b = 1.01)
 cop_mis_c <- Copula(c_a = .99, c_b = 1.01)
 cop_mis_p <- Copula(p_a = 4.9, p_b = 5.1)
 
+# Fit the models.
 etas_mis_mu <- ETAS(Link.f = cop_mis_mu$environ$linkf, 
                    Bru.opt.list = cop_mis_mu$environ$bruoptlist)
 etas_mis_K <- ETAS(Link.f = cop_mis_K$environ$linkf, 
@@ -441,45 +461,50 @@ etas_mis_p <- ETAS(Link.f = cop_mis_p$environ$linkf,
                    Bru.opt.list = cop_mis_p$environ$bruoptlist)
 ```
 
+Pair plots.
+
 ```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with μ Mis-specified"}
-# Mis-specifying μ 
+# Mis-specifying μ. 
 etas_mis_mu$envir$pairplot
 ```
 
 ```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with K Mis-specified"}
-# Mis-specifying K
+# Mis-specifying K.
 etas_mis_K$envir$pairplot
 ```
 
 ```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with α Mis-specified"}
-# Mis-specifying α
+# Mis-specifying α.
 etas_mis_alp$envir$pairplot
 ```
 
 ```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with c Mis-specified"}
-# Mis-specifying c
+# Mis-specifying c.
 etas_mis_c$envir$pairplot
 ```
 
 ```{r, fig.cap = "Pair Plots for Parameters of the L'Aquila Sequence, with p Mis-specified"}
-# Mis-specifying p
+# Mis-specifying p.
 etas_mis_p$envir$pairplot
 ```
 
-Synthetic catalogues generation
+## Synthetic Catalogues Generation
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
                      ht = NULL){
     
-    # inherits the environment from function `ETAS`
+    # This function aims at generating `n.cat` synthetic catalogues in 
+    # between T1 and T2, and the imposed history is set in `ht`.
+    
+    # Inherit the environment from the variable `etas`.
     envir <- etas$envir  
     
-    # updates environments if specified by users
+    # Update environments if specified by users.
     envir$t1 <- ifelse(!is.null(t1), t1, envir$t1)
     envir$t2 <- ifelse(!is.null(t2), t2, envir$t2)
     
-    # Function to generate a synthetic catalogue
+    # Function to generate a synthetic catalogue.
     synth.gen <- function(i){
         iteration <- i
         synth <- generate_temporal_ETAS_synthetic(
@@ -490,28 +515,28 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
         return(synth)
     }
     
-    # generates catalogues as list of lists
+    # Generate catalogues as list of lists.
     multi.synth.cat.list <- lapply(seq_len(n.cat), \(x)
         synth.gen(x))
 
-    # stores catalogues as list of data.frames
+    # Stores catalogues as a list of data frames.
     multi.synth.cat.list.df <- lapply(multi.synth.cat.list,
                                       \(x) do.call(rbind, x))
     
-    # counts the number of events in each catalogue
+    # Count the number of events in each catalogue.
     Nevents <- lapply(seq_len(n.cat), \(i) nrow(
         multi.synth.cat.list.df[[i]])) %>% unlist
     
-    # counts the number of large events in each catalogue
+    # Count the number of large events in each catalogue.
     mag <- etas$envir$mag
     Nlarge <- lapply(seq_len(n.cat), \(i) sum(
         multi.synth.cat.list.df[[i]]$magnitudes >= mag)) %>% unlist
     
-    # extracts the highest magnitude in each catalogue
+    # Extract the highest magnitude in each catalogue.
     MaxMag <- lapply(seq_len(n.cat), \(i) max(
         multi.synth.cat.list.df[[i]]$magnitudes)) %>% unlist
     
-    # sets catalogue identifier
+    # Set catalogue identifiers.
     multi.synth.cat.list.df <- lapply(seq_len(n.cat),
                                       \(x) cbind(
                                           multi.synth.cat.list.df[[x]],
@@ -520,10 +545,10 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
                                           num_large = Nlarge[x],
                                     max_mag = MaxMag[x] %>% round(2)))
     
-    # merges catalogues in unique data.frame
+    # Merge catalogues in a unique data frame.
     multi.synth.cat.df <- do.call(rbind, multi.synth.cat.list.df)
     
-    # returns the whole environment
+    # Return the whole environment.
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
@@ -531,7 +556,7 @@ mult.synth.ETAS <- function(t1 = NULL, t2 = NULL, n.cat = 1000,
 mult.synth <- mult.synth.ETAS(ht = NULL)
 ```
 
-Fitting Models on the Synthetic Catalogues
+## Hierarchical Clutering and Sampling
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 hier_clu_samp <- function(syn = mult.synth, kmax = 30){
@@ -607,14 +632,14 @@ hier_clu_samp <- function(syn = mult.synth, kmax = 30){
             \(i) (synth_1600$clusters == i) %>% 
                 which %>% sample(1))) %>% unlist %>% sample
     
-    # Return the dendrogram, the 3D scatter plot, and the sample ids.
+    # Return the dendrogram, the 3D scatter plot, and the sample IDs.
     return(tibble::lst(dendro, three_d_scatter, samp.id))
 }
-hier_c <- hier_clu_samp(mult.synth)
-sampid <- hier_c$samp.id
+hier_c <- hier_clu_samp(mult.synth) # Hierarchical clustering.
+sampid <- hier_c$samp.id # IDs of the samples.
 ```
 
-Dendrogram of the Clustered Catalogues
+Dendrogram of the Clustered Catalogues.
 
 ```{r, fig.cap = "Dendrogram of the Clustered Catalogues"}
 hier_c$dendro %>% plot(leaflab = 'none')
@@ -626,7 +651,7 @@ Run this chunk in `Rmarkdown` to get the 3D interactive scatter plot of the clus
 hier_c$three_d_scatter
 ```
 
-3D Scatter Plot (static) of the Clustered Catalogues
+3D Scatter Plot (static) of the Clustered Catalogues.
 
 ```{r, eval = file.exists('cluster3d.png'), fig.cap = "3D Scatter Plot of the Clustered Catalogues"}
 knitr::include_graphics('cluster3d.png')
@@ -636,13 +661,16 @@ knitr::include_graphics('cluster3d.png')
 synth.model <- function(syn = mult.synth, 
                         slice = seq(1, 5, by = 1)){
     
+    # This function aims at fitting an ETAS model on the synthetic catalogues
+    # specified in `syn`.
+    
+    # Extract characteristics and sample IDs.
     Nevents <- syn$environ$Nevents
     Nlar <- syn$environ$Nlarge
     MaxMag <- syn$environ$MaxMag %>% round(2)
     samp.id <- sampid[slice]
     
-    # we need to bing the synthetics with the observed catalogue 
-    # for plotting
+    # Create a data frame of the catalogues to be plotted.
     cat.df.for.plotting <- rbind(
       syn$environ$multi.synth.cat.df[
         which(
@@ -655,7 +683,7 @@ synth.model <- function(syn = mult.synth,
       )
     )
 
-    # plot them
+    # Plot synthetic catalogues.
     multi.synth.cat.plot <- ggplot(cat.df.for.plotting,
                                    aes(ts, magnitudes)) +
       geom_point(size = 0.5) +
@@ -666,34 +694,40 @@ synth.model <- function(syn = mult.synth,
       facet_wrap(facets = vars(cat.idx, num_events, num_large, max_mag), 
                  labeller = 'label_both', ncol = 6)
     
-    # modelling
-    post <- rep(list(NULL), samp.id %>% length)
+    # ETAS model fitting.
+    
+    post <- rep(list(NULL), samp.id %>% length) # Posterior list.
     post.par <- matrix(rep(0, (samp.id %>% length) * 5), 
-                       ncol = 5)
+                       ncol = 5) # Posterior parameters.
     
     for(i in samp.id %>% length %>% seq_len){
+        # Fit the ETAS model.
         multi.synth.etas <- ETAS(data = 
             syn$environ$multi.synth.cat.list.df[[samp.id[i]]],
                                     t1 = syn$environ$envir$t1, 
                                     t2 = syn$environ$envir$t2)
+        
+        # Store the information.
         post[[i]] <- multi.synth.etas$envir$post.list
         post.par[i,] <- multi.synth.etas$envir$post.par
         
+        # Legends of the plots.
         post[[i]]$post.df$Catalogues <- 
         paste('Random Catalogue', i, ':\n', Nevents[samp.id[i]],
               'Events, with', Nlar[samp.id[i]], 'Large Events,\n',
               'and the Highest Magnitude is', MaxMag[samp.id[i]])
     }
     
+    # Define a data frame for true parameters.
     df.true.param <- data.frame(x = etas$envir$post.par, 
                         param = names(etas$envir$post.par %>% as.list))
     
-    # bind marginal posterior data.frames
+    # Bind marginal posterior data frames.
     bind.post.df <- do.call(rbind, 
                             lapply(samp.id %>% length %>% seq_len,
                                    \(i) post[[i]]$post.df))
     
-    # plot them
+    # Plot the posterior parameter plots.
     post.par.plot <- ggplot(bind.post.df, 
                             aes(x = x, y = y, colour = Catalogues)) +
       geom_line() +
@@ -705,13 +739,16 @@ synth.model <- function(syn = mult.synth,
         mapping = aes(xintercept = x), linetype = 2
       )
 
-    # returns the whole environment
+    # Return the whole environment.
     environ <- as.list(environment())
     return(tibble::lst(environ))
 }
+# Fit the model of the sampled organic catalogues.
 mult.synth.fit <- lapply(seq_len(5), \(i) synth.model(syn = mult.synth,
                             slice = seq(5 * (i - 1) + 1, 5 * i, by = 1)))
 ```
+
+Synthetic catalogues, time vs magnitudes.
 
 ```{r, fig.cap = "Synthetic Catalogues, Time vs Magnitudes"}
 mult.synth.fit[[1]]$environ$multi.synth.cat.plot
@@ -721,6 +758,8 @@ mult.synth.fit[[4]]$environ$multi.synth.cat.plot
 mult.synth.fit[[5]]$environ$multi.synth.cat.plot
 ```
 
+Posterior plots of the catalogues.
+
 ```{r, fig.cap = "Posterior Plots for Parameters of Random Synthetic Catalogues"}
 mult.synth.fit[[1]]$environ$post.par.plot
 mult.synth.fit[[2]]$environ$post.par.plot
@@ -729,16 +768,24 @@ mult.synth.fit[[4]]$environ$post.par.plot
 mult.synth.fit[[5]]$environ$post.par.plot
 ```
 
-Analysis on the Behaviours of the Time-between-Events
+## Analysis on the Behaviours of the Time-between-Events
+
+### For Organic Catalogues
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 ECDF.interarrival <- function(j){
     
+    # This function aims at sketching ECDF and KS plots of the 
+    # organic catalogues with a baseline of the L'Aquila sequence.
+    
+    # Extract characteristics and sample IDs.
     samp.id <- mult.synth.fit[[j]]$environ$samp.id
     Nevents <- mult.synth.fit[[j]]$environ$Nevents
     Nlar <- mult.synth.fit[[j]]$environ$Nlar
     MaxMag <- mult.synth.fit[[j]]$environ$MaxMag
     
+    # Create a list of data frames specifying the time-between-events
+    # of each catalogue.
     data.list <- lapply(samp.id %>% length %>% seq_len, \(i) data.frame(
         Time_between_events = 
             mult.synth$environ$multi.synth.cat.list.df[[samp.id[i]]]$ts %>%
@@ -751,6 +798,8 @@ ECDF.interarrival <- function(j){
         )
     )
     
+    # Create a data frame specifying the time-between-events
+    # of the real sequence.
     data.list[[length(samp.id) + 1]] <- data.frame(
         Time_between_events = etas$envir$interarrival, 
         Catalogues = paste('Observed', ':\n', nrow(etas$envir$data),
@@ -758,14 +807,17 @@ ECDF.interarrival <- function(j){
               'and the Highest Magnitude is', 
               max(etas$envir$data$magnitudes) %>% round(2)))
     
+    # Bind the rows of the data frames.
     df <- do.call(rbind, data.list)
     
+    # Plot ECDF.
     ECDF.plot <- ggplot(df, aes(x = Time_between_events, 
                                 colour = Catalogues)) +
         stat_ecdf() + 
         xlab('Time between Events') +
       ylab('Empirical Cumulative Probability')
     
+    # Plot KS.
     KS.plot <- samp.id %>% length %>% seq_len %>% lapply(
         \(i) data.list[[i]]$Time_between_events %>% 
             inla.ks.plot(
@@ -778,6 +830,8 @@ ECDF.interarrival <- function(j){
 ecdf_interarrival <- lapply(seq_len(5), \(j) ECDF.interarrival(j))
 ```
 
+ECDF plots for organic catalogues.
+
 ```{r, fig.cap = "ECDF Plots of Time between Events, without Imposing History"}
 ecdf_interarrival[[1]]$ECDF.plot
 ecdf_interarrival[[2]]$ECDF.plot
@@ -786,20 +840,32 @@ ecdf_interarrival[[4]]$ECDF.plot
 ecdf_interarrival[[5]]$ECDF.plot
 ```
 
-```{r, eval = !file.exists('ks_org_best.png'), fig.cap = "An Example KS Plot of Time between Events, without Imposing History"}
+An example KS test plot for an organic catalogue.
+
+```{r, eval = file.exists('ks_org_best.png'), fig.cap = "An Example KS Plot of Time between Events, without Imposing History"}
 knitr::include_graphics('ks_org_best.png')
 ```
+
+### For Catalogues with Imposed History
 
 ```{r, message = FALSE, warning = FALSE, eval = !file.exists('Dissertation.RData')}
 ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
     
+    # This function aims at sketching ECDF and KS plots of the catalogues 
+    # with the maximum-magnitude event imposed with a baseline of the 
+    # L'Aquila sequence.
+    
+    # Generate synthetic catalogues, imposing history.
     mult.synth.imp <- mult.synth.ETAS(n.cat = n.cat, 
                                       ht = data[which.max(data$magnitudes),])
     
+    # Extract characteristics and sample IDs.
     Nevents <- mult.synth.imp$environ$Nevents
     Nlar <- mult.synth.imp$environ$Nlar
     MaxMag <- mult.synth.imp$environ$MaxMag
     
+    # Create a list of data frames specifying the time-between-events
+    # of each catalogue.
     data.list <- lapply(n.cat %>% seq_len, \(i) data.frame(
         Time_between_events = 
             mult.synth.imp$environ$multi.synth.cat.list.df[[i]]$ts %>%
@@ -811,6 +877,8 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
         )
     )
     
+    # Create a data frame specifying the time-between-events
+    # of the real sequence.
     data.list[[n.cat + 1]] <- data.frame(
         Time_between_events = etas$envir$interarrival, 
         Catalogues = paste('Observed', ':\n', nrow(etas$envir$data),
@@ -818,8 +886,11 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
               'and the Highest Magnitude is', 
               max(etas$envir$data$magnitudes) %>% round(2)))
     
+    
+    # Bind the rows of the data frames.
     df <- do.call(rbind, data.list)
     
+    #Plot ECDF.
     ECDF.plot <- ggplot(df, aes(x = Time_between_events, 
                                 colour = Catalogues)) +
         stat_ecdf() + 
@@ -837,11 +908,15 @@ ECDF.interarrival.imp <- function(n.cat = 10, data = etas$envir$data){
 ecdf_interarrival_imp <- ECDF.interarrival.imp()
 ```
 
+ECDF plots for catalogues imposing history.
+
 ```{r, fig.cap = "ECDF Plots of Time between Events, Imposing History"}
 ecdf_interarrival_imp$ECDF.plot
 ```
 
-```{r, eval = !file.exists('ks_imp_best.png'), fig.cap = "An Example KS Plot of Time between Events, Imposing History"}
+An example KS test plot for a catalogue imposing history.
+
+```{r, eval = file.exists('ks_imp_best.png'), fig.cap = "An Example KS Plot of Time between Events, Imposing History"}
 knitr::include_graphics('ks_imp_best.png')
 ```
 
